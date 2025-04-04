@@ -1,0 +1,8 @@
+# Ignorar entorno virtual del backend
+backend/venv/
+backend/__pycache__/
+*.pyc
+
+# Ignorar node_modules del frontend
+frontend/node_modules/
+.next/
