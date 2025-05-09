@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Por qué usar Domain-Driven Design (DDD)?
+Porque tu ERP es complejo y por dominio. DDD es ideal para eso.
 
-## Getting Started
+🔹 ¿Qué es DDD en pocas palabras?
+Es un enfoque que organiza el software según los problemas del negocio (dominios), no solo la tecnología.
 
-First, run the development server:
+🔹 ¿Por qué usarlo en un ERP con inventario, ventas, compras...?
+Porque:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Cada módulo (dominio) tiene reglas de negocio distintas.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Podés tener equipos que trabajen por módulo.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Te prepara para dividir el sistema en microservicios reales si en algún momento lo necesitás.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Facilita la escritura de tests más claros.
 
-## Learn More
+Mejora la comunicación entre programadores y stakeholders (vos hablás de "ventas", no de "utils").
 
-To learn more about Next.js, take a look at the following resources:
+¿Esta estructura ayuda a procesar muchas peticiones?
+Sí, y te explico por qué:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Esta arquitectura separa responsabilidades claramente (frontend/backend, por dominio), lo que reduce el acoplamiento y permite escalar horizontalmente.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Cada módulo puede ejecutarse independientemente, por lo que si "inventario" tiene muchas peticiones, podés escalar solo ese módulo.
 
-## Deploy on Vercel
+Podés usar cachés, colas de tareas (Celery en Django), bases de datos separadas por módulo o incluso instancias separadas si crece mucho.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Al tener backend y frontend desacoplados, podés usar CDNs para servir partes del frontend más rápido.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Se adapta fácil al uso de APIs asincrónicas y workers.
+
+
+/erp-system/
+├── apps/                    # Aquí van los módulos de dominio (inventario, ventas, compras...)
+│   ├── inventory/
+│   │   ├── frontend/        # Código Next.js específico de inventario
+│   │   └── backend/         # Código Django específico de inventario
+│   ├── sales/
+│   │   ├── frontend/
+│   │   └── backend/
+│   └── purchases/
+│       ├── frontend/
+│       └── backend/
+│
+├── shared/                 # Código compartido entre módulos
+│   ├── frontend/
+│   │   ├── components/      # UI components compartidos (botones, tablas, etc.)
+│   │   ├── hooks/           # Custom hooks comunes
+│   │   ├── utils/           # Utilidades comunes
+│   │   └── types/           # Tipados globales
+│   └── backend/
+│       ├── models/          # Modelos reutilizables
+│       ├── utils/           # Funciones comunes
+│       ├── middleware/      # Middleware Django compartido
+│       └── services/        # Lógica de negocio común
+│
+├── core/                   # Configuración del proyecto
+│   ├── frontend/           # Configuración de Next.js (app config, layouts, global css, etc.)
+│   └── backend/            # Configuración de Django (settings, wsgi, urls base, etc.)
+│
+├── .env
+├── package.json
+├── requirements.txt
+├── README.md
+└── docker-compose.yml  
+

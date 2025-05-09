@@ -8,7 +8,7 @@ const modules = [
     { name: "Contactos", icon: <People className="text-purple-500 text-3xl mb-2" />, link: "/contactos" },
     { name: "Ventas", icon: <ShoppingCart className="text-red-500 text-3xl mb-2" />, link: "/ventas" },
     { name: "Facturación", icon: <Receipt className="text-green-500 text-3xl mb-2" />, link: "/facturacion" },
-    { name: "Inventario", icon: <Inventory2 className="text-blue-600 text-3xl mb-2" />, link: "/inventory" },
+    { name: "Inventario", icon: <Inventory2 className="text-blue-600 text-3xl mb-2" />, link: "/appInventory" },
     { name: "Ajustes", icon: <Settings className="text-gray-600 text-3xl mb-2" />, link: "/ajustes" },
 ];
 

@@ -1,4 +1,4 @@
-import UserDropdown from '@/componentes/UserDropdown'
+import UserDropdown from '@/componentsGlobals/UserDropdown'
 import React from 'react'
 
 export default function NavBar() {
