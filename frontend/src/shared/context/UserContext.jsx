@@ -6,16 +6,18 @@ const ApiUserContext = createContext({
     usersList: [],
     usersSearchList: [],
     usersListAll: [],
+    supplierProduct: [],
     apiUsersSearchList: async()=>{},
     apiAddUser: async()=>{},
     apiUsersList: async()=>{},
-
+    apiAddSupplierProduct: async() =>{},
 });
 
 const ApiUserProvider = ({ children }) => {
     const [usersSearchList, setUsersSearchList] = useState([]);
     const [usersList, setUsersList] = useState([]);
     const [usersListAll, setUsersListAll] = useState([])
+    const [supplierProduct, setSupplierProduct] = useState([])
 
     const apiUsersSearchList = useCallback(async (search) => {
         try {
@@ -52,15 +54,27 @@ const ApiUserProvider = ({ children }) => {
       }
   },[])
 
+    const apiAddSupplierProduct = useCallback(async(newSupplierProduct)=>{
+      try {
+        const addNewSupplierProduct = await usersApi.fetchAddSupplierProduct(newSupplierProduct)
+        setSupplierProduct(prevSupplierPoduct => [... prevSupplierPoduct, addNewSupplierProduct])
+        return addNewSupplierProduct
+      } catch (error) {
+        console.log("Error al relacionar el producto con el proveedor-", error)
+      }
+    })
+
 
 
 const value = {
     usersList,
     usersSearchList,
     usersListAll,
+    supplierProduct,
     apiUsersSearchList,
     apiAddUser,
-    apiUsersList
+    apiUsersList,
+    apiAddSupplierProduct
 }
 
 return (

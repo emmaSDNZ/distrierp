@@ -1,13 +1,36 @@
 "use client"
-import React, {use, useContext, useEffect} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import { useRouter } from 'next/navigation'; 
 import { ApiProductContext } from "@/shared/context/ProductContext";
 import showToast from '@/shared/utils/ToastShow';
 
 export default function GeneralInformationForm({nameData, mode, productDetail, setMode, setDeleteHandler, setPropertyProduct }) {
-
+  
     const {apiAddProduct, apiProductUpdate, apiProductDelete} = useContext(ApiProductContext)
     const router = useRouter();
+    const isReadOnly = mode === 'view';
+    const [formData, setFormData] = useState({
+      description : "",
+      presentation: "",
+      price: 0,
+      price_sale: 0,
+      price_cost: 0,
+      reference_code: "",
+      bar_code: "",
+      internal_code: "",
+      proveedor_code: "",
+      ncm_code: "", 
+      niprod_code: "", 
+    })
+
+    const handleChange= e=>{
+      const { name, value } = e.target;
+
+      setFormData({
+        ...formData,
+        [name]: value
+      })
+    }
 
     const successProductForm=(data)=>{
         if (data && data.message){
@@ -22,6 +45,7 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
     const handleSubmit = async (e) => {
       e.preventDefault();
       const formattedData = {
+        ...formData,
         name: nameData.name
       };
     
@@ -37,8 +61,6 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
         console.log("Esto es setPropertyProduct", data)
       }
     };
-
-
     useEffect(() => {
       if (setDeleteHandler) {
         setDeleteHandler(() => async () => {
@@ -53,6 +75,25 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
       }
     }, [productDetail?.id, setDeleteHandler, router]); // Aseguramos que `router` está en la lista de dependencias
   
+    useEffect(() => {
+      console.log('productDetail', productDetail); // Verifica que `productDetail` tenga los valores correctos
+      if (productDetail) {
+
+        setFormData({
+          description: productDetail.description || "",
+          presentation: productDetail.presentation || "",
+          price: productDetail.price || "",
+          price_sale: productDetail.price_sale || "",
+          price_cost: productDetail.price_cost || "",
+          reference_code: productDetail.reference_code || "",
+          bar_code: productDetail.bar_code || "",
+          internal_code: productDetail.internal_code || "",
+          proveedor_code: productDetail.proveedor_code || "",
+          ncm_code: productDetail.ncm_code || "",
+          niprod_code: productDetail.niprod_code || "",
+        });
+      }
+    }, [productDetail]); 
 
   return (
     <div>
@@ -71,9 +112,11 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
               </label>
               <input
                 type="text"
-                id="descripcion"
-                name="descripcion"
-                value={""}
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                readOnly={isReadOnly}
 
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
@@ -89,13 +132,16 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
               </label>
               <input
                 type="text"
-                id="presentacion"
-                name="presentacion"
-                value={""}
+                id="presentation"
+                name="presentation"
+                value={formData.presentation}
+                onChange={handleChange}
+                readOnly={isReadOnly}
   
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
             </div>
+
             {/* Precio venta */}
             <div>
               <label
@@ -105,44 +151,70 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
                 Precio venta:
               </label>
               <input
-                type="text"
-                id="precio_venta"
-                name="precio_venta"
-                value={""}
-
+                type="number"
+                id="price_sale"
+                name="price_sale"
+                value={formData.price_sale}
+                onChange={handleChange}
+                readOnly={isReadOnly}
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
             </div>
+
             {/* Precio Coste */}
             <div>
               <label
                 htmlFor="precio_coste"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Coste:
+                Precio coste:
               </label>
               <input
-                type="text"
-                id="precio_coste"
-                name="precio_coste"
-                value={""}
+                type="number"
+                id="price_cost"
+                name="price_cost"
+                value={formData.price_cost}
+                onChange={handleChange}
+                readOnly={isReadOnly}
+                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
+              />
+            </div>
+
+            {/* Precio*/}
+            <div>
+              <label
+                htmlFor="precio_coste"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Precio:
+              </label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                readOnly={isReadOnly}
 
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
             </div>
+
             {/* Referencia */}
             <div>
               <label
                 htmlFor="referencia"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Referencia:
+                Codigo de referencia:
               </label>
               <input
                 type="text"
-                id="referencia"
-                name="referencia"
-                value={""}
+                id="reference_code"
+                name="reference_code"
+                value={formData.reference_code}
+                onChange={handleChange}
+                readOnly={isReadOnly}
 
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
@@ -158,29 +230,56 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
               </label>
               <input
                 type="text"
-                id="cod_barras"
-                name="cod_barras"
-                value={""}
+                id="bar_code"
+                name="bar_code"
+                value={formData.bar_code}
+                onChange= {handleChange}
+                readOnly={isReadOnly}
 
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
+
             </div>    
-            {/*  Codigo Producto Proveedor */}
+            {/*  Codigo interno del producto */}
             <div>
               <label
                 htmlFor="precio_coste"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Codigo producto proveedor:
+                Codigo interno del producto:
               </label>
               <input
                 type="text"
-                id="cod_prod_proveedor"
-                name="cod_prod_proveedor"
-                value={""}
+                id="internal_code"
+                name="internal_code"
+                value={formData.internal_code}
+                onChange={handleChange}
+                readOnly={isReadOnly}
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
             </div>
+            {/*  Codigo interno del proveedor */}
+            <div>
+              <label
+                htmlFor="precio_coste"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Codigo interno del proveedor:
+
+
+              </label>
+              <input
+                type="text"
+                id="proveedor_code"
+                name="proveedor_code"
+                value={formData.proveedor_code}
+                onChange={handleChange}
+                readOnly={isReadOnly}
+
+                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
+              />
+            </div>
+
             {/*  Codigo NCM */}
             <div>
               <label
@@ -193,13 +292,38 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
               </label>
               <input
                 type="text"
-                id="cod_ncm"
-                name="cod_ncm"
-                value={""}
-
+                id="ncm_code"
+                name="ncm_code"
+                value={formData.ncm_code}
+                onChange={handleChange}
+                readOnly={isReadOnly}
                 className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
               />
             </div>
+
+                        {/*   Codigo niprod */}
+            <div>
+              <label
+                htmlFor="precio_coste"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Codigo Niprod:
+
+
+              </label>
+              <input
+                type="text"
+                id="niprod_code"
+                name="niprod_code"
+                value={formData.niprod_code}
+                onChange={handleChange}
+                readOnly={isReadOnly}
+                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
+              />
+            </div>
+
+
+
           </div>
           {/* Mensaje de error si existe */}
 

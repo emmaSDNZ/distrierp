@@ -95,3 +95,14 @@ class SupplierProductFilterAPIView(generics.ListAPIView):
             "message": "Lista de relaciones FILTRO Producto-Proveedor obtenida correctamente.",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
+    
+
+
+class SupplierProductByProductIdView(generics.ListAPIView):
+    serializer_class = SupplierProductListSerializer
+
+    def get_queryset(self):
+        product_id = self.request.query_params.get('product_id', None)
+        if product_id is not None:
+            return SupplierProduct.objects.filter(product_id=product_id)
+        return SupplierProduct.objects.all()

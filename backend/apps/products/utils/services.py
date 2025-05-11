@@ -2,7 +2,7 @@ import pandas as pd
 from rest_framework import status
 from rest_framework.response import Response
 
-def successUserFile (file, user): 
+def successUserFile (file, user=None): 
     if not file:
         return Response({
                 "success": False,

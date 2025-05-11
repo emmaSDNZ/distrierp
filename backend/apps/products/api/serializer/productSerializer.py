@@ -12,7 +12,7 @@ from apps.products.api.serializer.categorySerializer import CategorySerializer
 class ProductSimpleFilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product  # Asegurate de importar tu modelo
-        fields = ['name', "description", "presentation", "niprod_code","bar_code" ,"proveedor_code", "price", "price_sale", "price_cost"]
+        fields = ["id",'name', "description", "presentation", "niprod_code","bar_code" ,"proveedor_code", "price", "price_sale", "price_cost"]
 
 
 class ProductSerializer(serializers.ModelSerializer):

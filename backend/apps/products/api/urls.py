@@ -7,7 +7,7 @@ from apps.products.api.views.nameAttributeView import NameAttributeAPIView, Name
 from apps.products.api.views.valueAttributeView import ValueAttributeAPIView, ValueAttributeCreateAPIView, ValueAttributeRetrieveAPIView, ValueAttributeUpdateAPIView, ValueAttributeDestroyAPIView
 from apps.products.api.views.variantProductView import VariantProductCreateAPIView, VariantProductListAPIView, VariantProductRetrieveAPIView, VariantProductUpdateAPIView, VariantProductDestroyAPIView
 from apps.products.api.views.usersView import  UserListAPIView,UserCreateAPIView, UserRetrieveAPIView, UserUpdateAPIView, UserDeleteAPIView, UserSearchAPIView
-from apps.products.api.views.supplierProductView import SupplierProductCreateAPIView, SupplierProductListAPIView, SupplierProductRetrieveAPIView, SupplierProductUpdateAPIView, SupplierProductDestroyAPIView, SupplierProductFilterAPIView
+from apps.products.api.views.supplierProductView import SupplierProductCreateAPIView, SupplierProductListAPIView, SupplierProductRetrieveAPIView, SupplierProductUpdateAPIView, SupplierProductDestroyAPIView, SupplierProductFilterAPIView, SupplierProductByProductIdView
 from apps.products.api.views.fileUploadProductView import FileUploeadProductCreateAPIView, FileUploeadProductListAPIView, FileUploeadProductVeryfyAPIView
 from apps.products.api.views.recordAuditView import RecordAuditListAPIView
 from apps.products.api.views.ImportPorductsView import ImportarProductosAPIView
@@ -70,7 +70,8 @@ urlpatterns = [
     path('supplier/product/update/<int:pk>/', SupplierProductUpdateAPIView.as_view(), name='supplier_product_update'),
     path('supplier/product/delete/<int:pk>/', SupplierProductDestroyAPIView.as_view(), name='supplier_product_delete'),
     path('supplier/product/filter/', SupplierProductFilterAPIView.as_view(), name='supplier_product_filter'),
-
+    path('supplier/product/by-product/', SupplierProductByProductIdView.as_view(), name='supplier-product-by-product-id'),
+    
     # Endpoint de carga de productos
     path('products/upload/veryfy/', FileUploeadProductVeryfyAPIView.as_view(), name='upload_product verydy'),
     path('products/upload/create/', FileUploeadProductCreateAPIView.as_view(), name='upload_product create'),  

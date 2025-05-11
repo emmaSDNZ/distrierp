@@ -2,39 +2,52 @@ import React, { useEffect, useState, useRef, useContext } from 'react';
 import { ApiUserContext } from '@/shared/context/UserContext';
 
 export default function PurchaseForm({ propertyProduct }) {
-  const { apiUsersSearchList, apiAddUser } = useContext(ApiUserContext);
+  const { apiUsersSearchList, apiAddUser, apiAddSupplierProduct } = useContext(ApiUserContext);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [dataPropertyProduct, setDataPropertyProduct] = useState({
     product_id: null,
     supplier_id: null,
   });
 
   useEffect(() => {
-    if (propertyProduct && propertyProduct.id && dataPropertyProduct.product_id === null) {
-      setDataPropertyProduct({
-        ...dataPropertyProduct,
-        product_id: propertyProduct.id,  // Solo se actualiza si product_id es null
-      });
-      console.log("product_id actualizado:", propertyProduct.id);
-    }
-  }, [propertyProduct, dataPropertyProduct]); 
+    if (propertyProduct?.id && dataPropertyProduct.product_id === null) {
+      const updatedProductId = propertyProduct.id;
 
-  const [isTyping, setIsTyping] = useState(false);  // Estado para verificar si el usuario está escribiendo
+      setDataPropertyProduct(prev => ({
+        ...prev,
+        product_id: updatedProductId,
+      }));
+
+      const fetchSuppliers = async () => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api_distrimed_productos/supplier/product/by-product/?product_id=${propertyProduct.id}`
+          );
+          const data = await response.json();
+          setSuppliers(data);
+        } catch (error) {
+          console.error("Error fetching supplier data:", error);
+        }
+      };
+
+      fetchSuppliers();
+    }
+  }, [propertyProduct]);
+
+  const [isTyping, setIsTyping] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!isTyping) return; // Solo buscar si el usuario está escribiendo
+      if (!isTyping || inputValue.trim().length < 3) return;
+
       try {
-        if (inputValue.trim().length >= 3) {
-          const data = await apiUsersSearchList(inputValue);
-          if (data && Array.isArray(data.data) && data.data.length > 0) {
-            setSuggestions(data.data);
-          } else {
-            setSuggestions([]);
-          }
+        const data = await apiUsersSearchList(inputValue);
+        if (data && Array.isArray(data.data) && data.data.length > 0) {
+          setSuggestions(data.data);
         } else {
           setSuggestions([]);
         }
@@ -45,9 +58,8 @@ export default function PurchaseForm({ propertyProduct }) {
     };
 
     const timeout = setTimeout(fetchData, 300);
-
     return () => clearTimeout(timeout);
-  }, [inputValue, isTyping, apiUsersSearchList]); // `isTyping` agregado
+  }, [inputValue, isTyping, apiUsersSearchList]);
 
   const handleButtonClick = () => {
     setShowInput(true);
@@ -55,47 +67,52 @@ export default function PurchaseForm({ propertyProduct }) {
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
-    setIsTyping(true); // Marcar que está escribiendo
+    setIsTyping(true);
   };
 
   const handleSelectCreateClick = async (name) => {
     try {
       setInputValue(name);
       setSuggestions([]);
-      setIsTyping(false); 
-      setShowInput(true);
+      setIsTyping(false);
 
       const newUser = { name };
-      const dataFormat = {
-        name: newUser.name,
-      };
+      const dataFormat = { name: newUser.name };
       const response = await apiAddUser(dataFormat);
-      setDataPropertyProduct({
-        ...dataPropertyProduct,
+      setDataPropertyProduct(prev => ({
+        ...prev,
         supplier_id: response.data.id,
-      });
+      }));
       console.log('Nuevo proveedor creado:', response.data.id);
     } catch (error) {
       console.error('Error al crear el proveedor:', error);
     }
   };
 
-  const handleSelect = (users) => {
-    const { name, id } = users;
-    setInputValue(name);
-    setDataPropertyProduct({
-      ...dataPropertyProduct,
-      supplier_id: id, // Cambié 'name_id' por 'supplier_id'
-    });
-    setSuggestions([]);
-    setIsTyping(false); 
-    setShowInput(true);
+  const handleSupplierProductButtonClick = async () => {
+    if (dataPropertyProduct.product_id && dataPropertyProduct.supplier_id) {
+      try {
+        const addedSupplierProduct = await apiAddSupplierProduct(dataPropertyProduct);
+        console.log("Relación proveedor-producto creada:", addedSupplierProduct);
+      } catch (error) {
+        console.error("Error al guardar proveedor-producto:", error);
+      }
+    } else {
+      console.log("Faltan datos para guardar el producto y proveedor.");
+    }
   };
 
-  // UseEffect para observar cambios en el estado 'dataPropertyProduct'
-  useEffect(() => {
-    console.log("propiedad del producto después de la actualización", dataPropertyProduct);
-  }, [dataPropertyProduct]);
+  const handleSelect = (supplier) => {
+    const { name, id } = supplier;
+    setInputValue(name);
+    setDataPropertyProduct(prev => ({
+      ...prev,
+      supplier_id: id,
+    }));
+    setSuggestions([]);
+    setIsTyping(false);
+    setShowInput(true);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -106,41 +123,23 @@ export default function PurchaseForm({ propertyProduct }) {
         setSuggestions([]);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
 
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [inputValue]);
 
-
-  const handleSupplierProductButtonClick = () => {
-    // Verifica que los datos del producto y proveedor están completos antes de hacer la solicitud
-    if (dataPropertyProduct.product_id && dataPropertyProduct.supplier_id) {
-      console.log("Datos del proveedor y producto:", dataPropertyProduct);
-      try {
-        const saveData = async () => {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api_distrimed_productos/supplier/product/create/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dataPropertyProduct),
-          });
-  
-          const responseData = await response.json();
-          console.log(responseData);
-        };
-        saveData();
-      } catch (error) {
-        console.error("Error al guardar los datos:", error);
+  useEffect(() => {
+    if (dataPropertyProduct.supplier_id) {
+      const selectedSupplier = suppliers.find(
+        (supplier) => supplier.supplier_id?.id === dataPropertyProduct.supplier_id
+      );
+      if (selectedSupplier) {
+        setInputValue(selectedSupplier.supplier_id?.name || "");
       }
-    } else {
-      console.log("Faltan datos para guardar el producto y proveedor.");
     }
-  };
-
-  
+  }, [dataPropertyProduct.supplier_id, suppliers]);
 
   return (
     <div ref={containerRef} className="relative w-64">
@@ -184,6 +183,20 @@ export default function PurchaseForm({ propertyProduct }) {
           </li>
         </ul>
       ) : null}
+
+      <div>
+        {suppliers.length > 0 ? (
+          <ul>
+            {suppliers.map((supplierObj) => (
+              <li key={supplierObj.id}>
+                {supplierObj.supplier_id?.name ?? "Nombre no disponible"} - Estado: {supplierObj.state ? "Activo" : "Inactivo"}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No hay proveedores para este producto.</p>
+        )}
+      </div>
       
       <div className="mt-4">
         <button
@@ -192,7 +205,7 @@ export default function PurchaseForm({ propertyProduct }) {
         >
           Guardar
         </button>
-        </div>
+      </div>
     </div>
   );
 }

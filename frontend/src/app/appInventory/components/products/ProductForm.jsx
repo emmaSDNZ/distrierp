@@ -21,7 +21,6 @@ export default function ProductForm({ productDetail, mode, setMode }) {
 
   const handleProductName = async (e) => {
     if(mode != "view"){
-
       const newName = e.target.value;
       setNameData({ ...nameData, name: newName });
     }

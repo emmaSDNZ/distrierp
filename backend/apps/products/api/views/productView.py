@@ -5,6 +5,7 @@ from apps.products.models.productModel import Product
 
 from apps.products.api.serializer.productSerializer import ProductSerializer, ProductWriteSerializer
 
+
 class ProductCreateAPIView(generics.CreateAPIView):
     serializer_class = ProductWriteSerializer
     queryset = Product.objects.all()
@@ -12,7 +13,7 @@ class ProductCreateAPIView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         write_serializer = self.get_serializer(data=request.data)
         write_serializer.is_valid(raise_exception=True)
-        product = write_serializer.save()  # Guarda el producto
+        product = write_serializer.save() 
 
         # Usamos el serializer de lectura para la respuesta
         read_serializer = ProductSerializer(product)
