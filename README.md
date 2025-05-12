@@ -18,6 +18,7 @@ python -m venv venv
 
 python manage.py runserver --settings=core.settings.local
 pip install django-cors-headers
+pip install unidecode
 
 pip install django djangorestframework
 python manage.py runserver --settings=core.settings.local
