@@ -19,8 +19,10 @@ python manage.py makemigrations
 python -m venv venv
 
 python manage.py runserver --settings=core.settings.local
-pip install django-cors-headers
+pip install  django djangorestframework  django-cors-headers unidecode
+
 pip install unidecode
+pip install XlsxWriter
 
 pip install django djangorestframework
 python manage.py runserver --settings=core.settings.local

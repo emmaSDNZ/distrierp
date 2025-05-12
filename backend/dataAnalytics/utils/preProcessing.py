@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from unidecode import unidecode
 from io import BytesIO
 def successColumns(df):
@@ -47,6 +48,7 @@ def ConverToJsonDf(json):
    return df
 
 
+
 def dfProcessing(df_user, df_db):
     # Diccionario que mapea campos del usuario con los campos de la base de datos
     column_mapping = {
@@ -58,29 +60,31 @@ def dfProcessing(df_user, df_db):
         'precio_base': 'price',
     }
 
-    # Copiamos el df
+    # Copiamos el DataFrame original
     df_user_proccess = df_user.copy()
 
-    # Limpiar la columna 'price' (antes 'precio_base') para eliminar puntos de miles y comas
-    df_user_proccess["price"] = df_user_proccess["price"].apply(
-        lambda x: str(x).replace('.', '').replace(',', '.') if isinstance(x, str) else str(x)
+    # Eliminar espacios en blanco y convertir comas/puntos en 'price'
+    df_user_proccess['price'] = (
+        df_user_proccess['price']
+        .astype(str)
+        .str.strip()                                # eliminar espacios adelante/atrás
+        .str.replace('.', '', regex=False)          # eliminar puntos (miles)
+        .str.replace(',', '.', regex=False)         # cambiar coma decimal a punto
+        .replace(['', 'nan', 'None', None], np.nan) # convertir strings vacíos y nulos explícitos a np.nan
     )
 
-    # Asegurarse de que 'price' es una Serie antes de hacer cualquier transformación
-    if isinstance(df_user_proccess["price"], pd.Series):
-        # Convertir la columna 'price' a tipo float, manejando valores no numéricos
-        df_user_proccess["price"] = pd.to_numeric(df_user_proccess["price"], errors='coerce')
+    # Convertir a numérico, forzando errores a NaN
+    df_user_proccess['price'] = pd.to_numeric(df_user_proccess['price'], errors='coerce')
 
-        # Verificar si hay valores NaN en 'price' después de la conversión
-        if df_user_proccess["price"].isnull().any():
-            print("\nAdvertencia: Hay valores NaN en la columna 'price'.")
-            df_user_proccess["price"].fillna(0, inplace=True)
+    # Advertir si aún hay NaN
+    if df_user_proccess['price'].isnull().any():
+        print("⚠️ Advertencia: Hay valores NaN en la columna 'price'. Serán reemplazados por 0.")
 
-        # Aumentar el valor de "price" en 10000
-        df_user_proccess['price'] = df_user_proccess['price'] + 105420
+    # Reemplazar NaN por 0
+    df_user_proccess['price'] = df_user_proccess['price'].fillna(0)
 
-    else:
-        print("Error: 'price' no es una Serie.")
+    # Aumentar el precio
+    df_user_proccess['price'] = df_user_proccess['price'] + 105420
 
     # Agregar columna de prueba
     df_user_proccess['nueva_columna'] = 'procesado'
