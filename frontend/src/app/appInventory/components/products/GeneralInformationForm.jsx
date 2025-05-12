@@ -34,10 +34,12 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
 
     const successProductForm=(data)=>{
         if (data && data.message){
+          console.log(data)
             return showToast.showSuccessToast(data.message)
         }
         else{
             const messageError = "Error al agregar el producto"
+                   console.log(data)
             return showToast.showErrorToast(messageError)
         }
     }
@@ -58,7 +60,7 @@ export default function GeneralInformationForm({nameData, mode, productDetail, s
         data = await apiAddProduct(formattedData);
         successProductForm(data);
         setPropertyProduct(data);
-        console.log("Esto es setPropertyProduct", data)
+        console.log("Esto es AddProduct", data)
       }
     };
     useEffect(() => {

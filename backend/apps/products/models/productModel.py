@@ -57,3 +57,44 @@ class Product(BaseModel):
         verbose_name = "Producto"
         verbose_name_plural = "Productos"
     
+
+    def save(self, *args, **kwargs):
+        #Asignar tipo de producto por defecto si no esta definico
+        if not self.type_product:
+            self.type_product = TypeProduct.get_default_type_product()
+        super().save(*args, **kwargs)
+        
+    @classmethod
+    def handle_categories(cls, categories_data):
+        """
+        Maneja las categorías. Si no se pasan, asigna la categoría por defecto.
+        Si se pasan IDs, las agrega. Si se pasan nombres, las crea y agrega.
+        """
+        categories = []
+
+        if not categories_data:
+            # Si no hay categorías, se asigna una categoría predeterminada.
+            default_category, _ = Category.objects.get_or_create(name='All')
+            categories.append(default_category)
+        else:
+            for cat in categories_data:
+                category = None
+                if "id" in cat:
+                    # Si pasa un ID, buscamos la categoría correspondiente.
+                    category = Category.objects.filter(id=cat["id"]).first()
+                elif "name" in cat:
+                    # Si pasa un nombre, se crea o busca la categoría.
+                    category, _ = Category.objects.get_or_create(name=cat["name"])
+                if category:
+                    categories.append(category)
+
+        return categories
+
+    def add_categories(self, categories_data):
+        """
+        Agrega categorías al producto.
+        """
+        categories = self.handle_categories(categories_data)
+        self.categories.set(categories)  # Usa set() para agregar las categorías de manera eficiente.
+        self.save()
+

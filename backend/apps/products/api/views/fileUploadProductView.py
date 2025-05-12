@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 import pandas as pd
 import json
+from io import BytesIO
 from apps.products.api.serializer.fileUploadProductSerializer import FileUploadProductSerializer
 from apps.products.models.fileUploadProductModel import FileUploadProductModel
 from apps.products.models.userModel import User 
@@ -112,8 +113,8 @@ class FileUploeadProductCreateAPIView(generics.CreateAPIView):
                     "message": "Formato de archivo no soportado.",
                     "data": None
                 }, status=status.HTTP_400_BAD_REQUEST)
-            df = df.reset_index(drop=True)
 
+            df = df.reset_index(drop=True)
 
             # 5. Validar columnas
             df, messages, valido = successColumns(df)
@@ -124,39 +125,33 @@ class FileUploeadProductCreateAPIView(generics.CreateAPIView):
                     "data": None
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # 6. (COMENTADO) Guardar el archivo en la base de datos
-            FileUploadProductModel.objects.create(
-                name_supplier_id=name_supplier,
-                file_name=file_obj.name
-            )
-            # Comentado para evitar inserciones durante pruebas
+            # 6. Obtener el DataFrame de la base de datos
             df_db, _ = get_supplier_product_df(supplier_id=name_supplier)
-            # 7. Obetenemos el df de la base de datos y  Procesar el DataFrame del usaurio
-            
+
+            # 7. Procesar el DataFrame
             df_processing = dfProcessing(df, df_db)
-            # PRINT para ver en consola si estás en entorno local
-            print(df_processing.head())
 
-            # 8. Retornar JSON con datos procesados para prueba  (solo debug)
-            #json_data = df_processing.where(pd.notnull(df_processing), None).to_json(orient='records')
-            #parsed_data = json.loads(json_data)
+            # Verificar si df_processing contiene datos
+            if df_processing.empty:
+                return Response({
+                    "success": False,
+                    "message": "El DataFrame procesado está vacío.",
+                    "data": None
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            #return Response({
-            #    "success": True,
-            #    "message": "Archivo procesado correctamente (modo prueba)",
-            #    "data": parsed_data
-            #}, status=status.HTTP_200_OK)
-
-            # 9. (COMENTADO) Retornar archivo como descarga
-            output = io.BytesIO()
+            # 8. Generar el archivo Excel para descarga
+            output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 df_processing.to_excel(writer, index=False)
             output.seek(0)
+
+            # Crear la respuesta para la descarga
             response = HttpResponse(
                 output,
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
             response['Content-Disposition'] = 'attachment; filename=archivo_procesado.xlsx'
+
             return response
 
         except User.DoesNotExist:
@@ -172,4 +167,3 @@ class FileUploeadProductCreateAPIView(generics.CreateAPIView):
                 "message": f"Error al procesar el archivo: {str(e)}",
                 "data": None
             }, status=status.HTTP_400_BAD_REQUEST)
-

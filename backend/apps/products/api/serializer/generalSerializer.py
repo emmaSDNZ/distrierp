@@ -5,8 +5,7 @@ from apps.products.models.typeProductModel import TypeProduct
 class MeasureUnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasureUnit 
-        fields = '__all__'
-
+        fields = ["id", "description"]
 
 class CategoryProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,4 +16,4 @@ class CategoryProductSerializer(serializers.ModelSerializer):
 class TypeProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeProduct
-        fields = "__all__"
+        fields = ["id", "type_product"]

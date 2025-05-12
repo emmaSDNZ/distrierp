@@ -1,6 +1,6 @@
 import pandas as pd
 from unidecode import unidecode
-
+from io import BytesIO
 def successColumns(df):
     # Normalizar nombres de columnas
     df.columns = [unidecode(col.strip().lower()) for col in df.columns]
@@ -58,46 +58,29 @@ def dfProcessing(df_user, df_db):
         'precio_base': 'price',
     }
 
-    # Mostrar información inicial
-    print("DataFrame del usuario:")
-    print("Columnas del usuario:")
-    print(df_user.columns)
-    
-    print("DataFrame de la base de datos:")
-    print("Columnas de la base de datos:")
-    print(df_db.columns)
-    print("Tipos de datos")
-    print(df_user.dtypes)
-
-    # Copiamos el df 
+    # Copiamos el df
     df_user_proccess = df_user.copy()
 
-    # Ver los valores de 'precio_base' antes de hacer cualquier procesamiento
-    print("\nValores de 'price' antes del procesamiento:")
-    print(df_user['precio_base'].head())  # Solo los primeros 5 valores para revisión
-
-    # Mapeamos las columnas del usuario para que coincidan con las de la base de datos
-    df_user_proccess = df_user_proccess.rename(columns=column_mapping)
-    
-    print("df user_ después del mapeo de columnas:")
-    print(df_user_proccess.columns)
-
     # Limpiar la columna 'price' (antes 'precio_base') para eliminar puntos de miles y comas
-    df_user_proccess["price"] = df_user_proccess["price"].apply(lambda x: str(x).replace('.', '').replace(',', '.') if isinstance(x, str) else x)
+    df_user_proccess["price"] = df_user_proccess["price"].apply(
+        lambda x: str(x).replace('.', '').replace(',', '.') if isinstance(x, str) else str(x)
+    )
 
-    # Ver los valores de 'price' después de limpiar
-    print("\nValores de 'price' después del procesamiento de comas y puntos:")
-    print(df_user_proccess['price'].head())  # Solo los primeros 5 valores
+    # Asegurarse de que 'price' es una Serie antes de hacer cualquier transformación
+    if isinstance(df_user_proccess["price"], pd.Series):
+        # Convertir la columna 'price' a tipo float, manejando valores no numéricos
+        df_user_proccess["price"] = pd.to_numeric(df_user_proccess["price"], errors='coerce')
 
-    # Convertir la columna 'price' a tipo float
-    try:
-        df_user_proccess["price"] = df_user_proccess["price"].astype(float)
-    except ValueError as e:
-        print(f"Error al convertir 'price' a float: {e}")
-        return None  # En caso de error en la conversión, devolvemos None
+        # Verificar si hay valores NaN en 'price' después de la conversión
+        if df_user_proccess["price"].isnull().any():
+            print("\nAdvertencia: Hay valores NaN en la columna 'price'.")
+            df_user_proccess["price"].fillna(0, inplace=True)
 
-    # Aumentar el valor de "price" en 10000
-    df_user_proccess['price'] = df_user_proccess['price'] + 105420
+        # Aumentar el valor de "price" en 10000
+        df_user_proccess['price'] = df_user_proccess['price'] + 105420
+
+    else:
+        print("Error: 'price' no es una Serie.")
 
     # Agregar columna de prueba
     df_user_proccess['nueva_columna'] = 'procesado'

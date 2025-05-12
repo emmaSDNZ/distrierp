@@ -4,7 +4,6 @@ from apps.base.models import BaseModel
 
 class MeasureUnit(BaseModel):
     description = models.CharField("Descripcion", max_length=50, blank=False, null=False, unique=True)
-
     class Meta:
 
         verbose_name="Unidad de Medida"

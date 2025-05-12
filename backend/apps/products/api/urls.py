@@ -10,7 +10,7 @@ from apps.products.api.views.usersView import  UserListAPIView,UserCreateAPIView
 from apps.products.api.views.supplierProductView import SupplierProductCreateAPIView, SupplierProductListAPIView, SupplierProductRetrieveAPIView, SupplierProductUpdateAPIView, SupplierProductDestroyAPIView, SupplierProductFilterAPIView, SupplierProductByProductIdView
 from apps.products.api.views.fileUploadProductView import FileUploeadProductCreateAPIView, FileUploeadProductListAPIView, FileUploeadProductVeryfyAPIView
 from apps.products.api.views.recordAuditView import RecordAuditListAPIView
-from apps.products.api.views.ImportPorductsView import ImportarProductosAPIView
+from apps.products.api.views.ImportPorductsView import ImportarProductosAPIView,ProductCreateImportAPIView
 urlpatterns = [
     # Endpoints de atributos:Nombre 
     path('variant/product/create/', VariantProductCreateAPIView.as_view(), name='variant_product_create'),
@@ -45,6 +45,7 @@ urlpatterns = [
     path('products/<int:pk>/', ProductRetrieveAPIView.as_view(), name='product_detail'),
     path('products/update/<int:pk>/', ProductUpdateAPIView.as_view(), name='product_update'),
     path('products/delete/<int:pk>/', ProductDestroyAPIView.as_view(), name='product_delete'),
+
 
     # Endpoints de unidades de medidaéxito
     path('measure_unit/', MeasureUnitList.as_view(), name='measure_unit_list'),
@@ -81,4 +82,5 @@ urlpatterns = [
     path('audit/product/list/', RecordAuditListAPIView.as_view(), name='audit product list'),
 
     path('importar-productos/', ImportarProductosAPIView.as_view(), name='importar_productos'),
+    path('importar-productos/create', ProductCreateImportAPIView.as_view(), name='crear porudcto'),
 ]
