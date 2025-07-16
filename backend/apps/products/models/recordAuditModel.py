@@ -2,6 +2,7 @@
 from django.db import models
 
 class RecordAuditModel(models.Model):
+    
     modelo = models.CharField(max_length=100)
     registro_id = models.IntegerField()
     registro_nombre = models.CharField(max_length=250)

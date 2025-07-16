@@ -21,17 +21,23 @@ def successUserFile (file, user=None):
     return file, user
 
 
-
 def readFile(file):
-    """Lee un archivo CSV o Excel y lo convierte en un DataFrame."""
+    """
+    Lee un archivo CSV o Excel y lo convierte en un DataFrame.
+    Lanza ValueError si el tipo de archivo no es soportado.
+    """
     try:
         if file.name.endswith('.csv'):
             return pd.read_csv(file)
         elif file.name.endswith(('.xls', '.xlsx')):
             return pd.read_excel(file)
+        
         else:
-            return None
+            raise ValueError("Formato de archivo no soportado. Se requiere .csv o .xlsx")
     except Exception as e:
-        print(f"Error al leer archivo: {e}")
-        return None
+        raise IOError(f"Error al leer el archivo: {e}")
     
+
+def normalizarNombreColumnas(df):
+        
+    return df

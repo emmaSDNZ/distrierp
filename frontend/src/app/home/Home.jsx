@@ -5,7 +5,7 @@ import ModuleCard from "./components/ModuleCard";
 
 const modules = [
     { name: "Calendario", icon: <CalendarMonth className="text-yellow-500 text-3xl mb-2" />, link: "/calendario" },
-    { name: "Contactos", icon: <People className="text-purple-500 text-3xl mb-2" />, link: "/contactos" },
+    { name: "Contactos", icon: <People className="text-purple-500 text-3xl mb-2" />, link: "/appContacts" },
     { name: "Ventas", icon: <ShoppingCart className="text-red-500 text-3xl mb-2" />, link: "/ventas" },
     { name: "Facturación", icon: <Receipt className="text-green-500 text-3xl mb-2" />, link: "/facturacion" },
     { name: "Inventario", icon: <Inventory2 className="text-blue-600 text-3xl mb-2" />, link: "/appInventory" },

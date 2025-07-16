@@ -35,7 +35,8 @@ LOCAL_APPS = [
 
 THIRD_APPS = [
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
+    'django_filters'
 ]
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS
@@ -115,3 +116,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,  # Cambiá 50 al tamaño de página que te convenga
+}

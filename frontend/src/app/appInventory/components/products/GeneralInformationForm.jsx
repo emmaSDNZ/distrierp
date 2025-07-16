@@ -1,347 +1,330 @@
 "use client"
-import React, {useState, useContext, useEffect} from 'react';
-import { useRouter } from 'next/navigation'; 
+import React, { useState, useContext, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { apiPrecio } from "@/shared/api/apiPrecio";
+import { crearPreciosParaProducto } from "@/shared/services/servicesProductos/servicesPrecios";
 import { ApiProductContext } from "@/shared/context/ProductContext";
-import showToast from '@/shared/utils/ToastShow';
+import EntityButton from "@/shared/components/entityGeneral/EntityButton";
+import DeleteIcon from "@mui/icons-material/Delete";
+import FormInput from "@/shared/components/entityForm/FormInput";
+import UtilsFunctions from "@/shared/utils/utilsFunctions";
+import { Box, IconButton, Typography } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
-export default function GeneralInformationForm({nameData, mode, productDetail, setMode, setDeleteHandler, setPropertyProduct }) {
-  
-    const {apiAddProduct, apiProductUpdate, apiProductDelete} = useContext(ApiProductContext)
-    const router = useRouter();
-    const isReadOnly = mode === 'view';
-    const [formData, setFormData] = useState({
-      description : "",
-      presentation: "",
-      price: 0,
-      price_sale: 0,
-      price_cost: 0,
-      reference_code: "",
-      bar_code: "",
-      internal_code: "",
-      proveedor_code: "",
-      ncm_code: "", 
-      niprod_code: "", 
-    })
+export default function GeneralInformationForm({
+  productoProductoData,
+  setProductoPrecios,
+  nameData,
+  setNameData,
+  mode,
+  setMode,
+}) {
+  const {
+    apiProductoTemplateCreate,
+    apiProductoTemplateDetalle,
+    apiProductoTemplateEliminar,
+  } = useContext(ApiProductContext);
 
-    const handleChange= e=>{
-      const { name, value } = e.target;
+  const router = useRouter();
 
-      setFormData({
-        ...formData,
-        [name]: value
-      })
+  const [formData, setFormData] = useState({
+    Descripcion: "",
+    Precio: 0,
+    "Precio de compra unitario": 0,
+    "Precio de compra con IVA": 0,
+    "Precio de compra sin IVA": 0,
+    "Precio de compra sugerido": 0,
+    "Precio de venta": 0,
+    "Codigo referencia": "",
+    "Codigo barras": "",
+    "Codigo interno": "",
+    "Codigo NCM": "",
+    "Codigo producto": "",
+    NIPROD: "",
+  });
+
+  const handleChange = UtilsFunctions.createHandleChange(setFormData);
+
+  // ✅ UX: limpiar input si es 0 y restaurar si queda vacío
+  const handleFocus = (e) => {
+    if (e.target.value === "0" || e.target.value === 0) {
+      e.target.value = "";
     }
+  };
 
-    const successProductForm=(data)=>{
-        if (data && data.message){
-          console.log(data)
-            return showToast.showSuccessToast(data.message)
-        }
-        else{
-            const messageError = "Error al agregar el producto"
-                   console.log(data)
-            return showToast.showErrorToast(messageError)
-        }
+  const handleBlur = (e) => {
+    if (e.target.value === "") {
+      e.target.value = "0";
+      handleChange({ target: { name: e.target.name, value: 0 } });
     }
-    
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      const formattedData = {
-        ...formData,
-        name: nameData.name
-      };
-    
-      let data;
-      if (mode === "edit") {
-        data = await apiProductUpdate(productDetail.id, formattedData);
-        successProductForm(data);
-        setMode("view");
-      } else {
-        data = await apiAddProduct(formattedData);
-        successProductForm(data);
-        setPropertyProduct(data);
-        console.log("Esto es AddProduct", data)
-      }
+  };
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuOpen = Boolean(anchorEl);
+  const moreBtnRef = useRef(null);
+
+  const handleMoreClick = (event) => setAnchorEl(event.currentTarget);
+  const handleMoreClose = () => setAnchorEl(null);
+
+  async function crearPrecioProducto(idProducto, data, apiFn) {
+    const formDataPrecio = {
+      id_producto_producto: idProducto,
+      ...data,
     };
-    useEffect(() => {
-      if (setDeleteHandler) {
-        setDeleteHandler(() => async () => {
-          const data = await apiProductDelete(productDetail.id);
-          successProductForm(data);
-          
-          if (data.success) {
-            // Redirigir después de eliminar el producto
-            router.push('/appInventory/products?view=new');
-          }
-        });
-      }
-    }, [productDetail?.id, setDeleteHandler, router]); // Aseguramos que `router` está en la lista de dependencias
-  
-    useEffect(() => {
-      console.log('productDetail', productDetail); // Verifica que `productDetail` tenga los valores correctos
-      if (productDetail) {
 
-        setFormData({
-          description: productDetail.description || "",
-          presentation: productDetail.presentation || "",
-          price: productDetail.price || "",
-          price_sale: productDetail.price_sale || "",
-          price_cost: productDetail.price_cost || "",
-          reference_code: productDetail.reference_code || "",
-          bar_code: productDetail.bar_code || "",
-          internal_code: productDetail.internal_code || "",
-          proveedor_code: productDetail.proveedor_code || "",
-          ncm_code: productDetail.ncm_code || "",
-          niprod_code: productDetail.niprod_code || "",
-        });
+    return await apiFn(formDataPrecio);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    if (mode === "edit") {
+      const resultadoNombre = await apiProductoTemplateDetalle(
+        productoProductoData.id_producto_template,
+        { nombre_base_producto: nameData.nombre_base_producto }
+      );
+
+      const productoProductoId =
+        productoProductoData?.producto_productos?.[0]?.id_producto_producto;
+
+      if (!productoProductoId) {
+        UtilsFunctions.showToastMessageSuccessError(false, "Producto sin ID para actualizar precios");
+        return;
       }
-    }, [productDetail]); 
+
+      await crearPrecioProducto(productoProductoId, formData["Precio"], apiPrecio.createPrecioBase);
+      await crearPrecioProducto(productoProductoId, formData["Precio de venta"], apiPrecio.createPrecioVenta);
+      await crearPrecioProducto(productoProductoId, formData["Precio de compra unitario"], apiPrecio.createPrecioCompra);
+
+      UtilsFunctions.showToastMessageSuccessError(resultadoNombre);
+
+      const productoActualizado = await apiProductoTemplateDetalle(
+        productoProductoData.id_producto_template
+      );
+
+      if (productoActualizado) {
+        setNameData({ nombre_base_producto: productoActualizado.nombre_base_producto });
+        setMode("view");
+      }
+      return;
+    }
+
+if (mode === "create") {
+  const formattedDataProductoTemplate = {
+    nombre_base_producto: nameData.nombre_base_producto,
+    descripcion: formData["Descripcion"],
+    codigo_referencia: formData["Codigo referencia"],
+    codigo_barras: formData["Codigo barras"],
+    codigo_interno: formData["Codigo interno"],
+    codigo_ncm: formData["Codigo NCM"],
+    codigo_producto: formData["Codigo producto"],
+    codigo_niprod: formData["NIPROD"],
+  };
+
+  const response = await apiProductoTemplateCreate(formattedDataProductoTemplate);
+  const { success, message, data } = response;
+
+  UtilsFunctions.showToastMessageSuccessError(success, message);
+  if (!success) return;
+
+  await crearPreciosParaProducto(data.id_producto_producto, formData);
+  await apiProductoTemplateDetalle(data.id_producto_template);
+
+  setFormData({
+    Descripcion: "",
+    Precio: 0,
+    "Precio de compra unitario": 0,
+    "Precio de compra con IVA": 0,
+    "Precio de compra sin IVA": 0,
+    "Precio de compra sugerido": 0,
+    "Precio de venta": 0,
+    "Codigo referencia": "",
+    "Codigo barras": "",
+    "Codigo interno": "",
+    "Codigo NCM": "",
+    "Codigo producto": "",
+    NIPROD: "",
+  });
+
+  setNameData({ nombre_base_producto: "" });
+}
+
+  }
+
+  function renderFormInputs() {
+    const basicFields = [
+      "Descripcion",
+      "Precio",
+      "Precio de compra unitario",
+      "Precio de venta",
+      "Codigo referencia",
+      "Codigo barras",
+      "Codigo interno",
+      "Codigo NCM",
+      "Codigo producto",
+      "NIPROD",
+    ];
+
+    return basicFields.map((key) => {
+      if (key === "Precio de compra unitario") {
+        return (
+          <div key={key} className="flex items-center space-x-2">
+            <FormInput
+              label={key}
+              type="number"
+              id={key}
+              name={key}
+              value={formData[key]}
+              onChange={handleChange}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              readOnly={mode === "view"}
+              className="flex-grow"
+            />
+            {mode !== "view" && (
+              <IconButton
+                aria-label="Precios avanzados"
+                onClick={handleMoreClick}
+                ref={moreBtnRef}
+                size="small"
+                sx={{ ml: 1 }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+            )}
+
+            {menuOpen && anchorEl === moreBtnRef.current && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  mt: 1,
+                  p: 1,
+                  bgcolor: "background.paper",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                  borderRadius: 1,
+                  zIndex: 10,
+                  width: 220,
+                  fontSize: 13,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+                onMouseLeave={handleMoreClose}
+              >
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{
+                    fontWeight: "600",
+                    textAlign: "center",
+                    mb: 1,
+                    fontSize: 14,
+                    width: "100%",
+                  }}
+                >
+                  Precios de compra avanzados
+                </Typography>
+
+                {[
+                  "Precio de compra unitario",
+                  "Precio de compra con IVA",
+                  "Precio de compra sin IVA",
+                  "Precio de compra sugerido",
+                ].map((key) => (
+                  <div
+                    key={key}
+                    style={{
+                      marginBottom: 6,
+                      whiteSpace: "nowrap",
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <FormInput
+                      label={key}
+                      type="number"
+                      id={key}
+                      name={key}
+                      value={formData[key]}
+                      onChange={handleChange}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                      readOnly={mode === "view"}
+                      className="text-sm"
+                      style={{ width: 130, margin: 0, padding: "4px 6px" }}
+                    />
+                  </div>
+                ))}
+              </Box>
+            )}
+          </div>
+        );
+      }
+
+      const inputType = typeof formData[key] === "number" ? "number" : "text";
+      return (
+        <FormInput
+          key={key}
+          label={key}
+          type={inputType}
+          id={key}
+          name={key}
+          value={formData[key]}
+          onChange={handleChange}
+          onFocus={inputType === "number" ? handleFocus : undefined}
+          onBlur={inputType === "number" ? handleBlur : undefined}
+          readOnly={mode === "view"}
+        />
+      );
+    });
+  }
+
+  function renderEliminarButton() {
+    if (mode === "view") {
+      return (
+        <div className="flex justify-end pt-4">
+          <EntityButton
+            title="Eliminar producto"
+            onClick={() => {
+              if (!productoProductoData) return;
+              UtilsFunctions.deleteClick(
+                apiProductoTemplateEliminar,
+                productoProductoData.id_producto_template,
+                router,
+                "/appInventory/products?view=new"
+              );
+            }}
+            startIcon={<DeleteIcon />}
+          />
+        </div>
+      );
+    }
+    return null;
+  }
+
+  function renderSubmitButton() {
+    if (
+      (mode === "create" || mode === "edit") &&
+      nameData.nombre_base_producto?.trim()
+    ) {
+      const title = mode === "edit" ? "Actualizar" : "Agregar";
+      return (
+        <div className="flex justify-end pt-4">
+          <EntityButton type="submit" size="large" title={title} />
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div>
-    <form  onSubmit={handleSubmit} className="space-y-4">
-          {/* Sección de información */}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            {/* Descripción */}
-            <div>
-              <label
-                htmlFor="descripcion"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Descripción:
-              </label>
-              <input
-                type="text"
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-            
-            {/* Presentación */}
-            <div>
-              <label
-                htmlFor="presentacion"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Presentación:
-              </label>
-              <input
-                type="text"
-                id="presentation"
-                name="presentation"
-                value={formData.presentation}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-  
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-            {/* Precio venta */}
-            <div>
-              <label
-                htmlFor="precio_venta"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Precio venta:
-              </label>
-              <input
-                type="number"
-                id="price_sale"
-                name="price_sale"
-                value={formData.price_sale}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-            {/* Precio Coste */}
-            <div>
-              <label
-                htmlFor="precio_coste"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Precio coste:
-              </label>
-              <input
-                type="number"
-                id="price_cost"
-                name="price_cost"
-                value={formData.price_cost}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-            {/* Precio*/}
-            <div>
-              <label
-                htmlFor="precio_coste"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Precio:
-              </label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-            {/* Referencia */}
-            <div>
-              <label
-                htmlFor="referencia"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Codigo de referencia:
-              </label>
-              <input
-                type="text"
-                id="reference_code"
-                name="reference_code"
-                value={formData.reference_code}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-            {/* Codigo de Barra */}
-            <div>
-              <label
-                htmlFor="precio_coste"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Codigo de barras:
-              </label>
-              <input
-                type="text"
-                id="bar_code"
-                name="bar_code"
-                value={formData.bar_code}
-                onChange= {handleChange}
-                readOnly={isReadOnly}
-
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-
-            </div>    
-            {/*  Codigo interno del producto */}
-            <div>
-              <label
-                htmlFor="precio_coste"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Codigo interno del producto:
-              </label>
-              <input
-                type="text"
-                id="internal_code"
-                name="internal_code"
-                value={formData.internal_code}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-            {/*  Codigo interno del proveedor */}
-            <div>
-              <label
-                htmlFor="precio_coste"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Codigo interno del proveedor:
-
-
-              </label>
-              <input
-                type="text"
-                id="proveedor_code"
-                name="proveedor_code"
-                value={formData.proveedor_code}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-            {/*  Codigo NCM */}
-            <div>
-              <label
-                htmlFor="precio_coste"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Codigo NCM:
-
-
-              </label>
-              <input
-                type="text"
-                id="ncm_code"
-                name="ncm_code"
-                value={formData.ncm_code}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-                        {/*   Codigo niprod */}
-            <div>
-              <label
-                htmlFor="precio_coste"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Codigo Niprod:
-
-
-              </label>
-              <input
-                type="text"
-                id="niprod_code"
-                name="niprod_code"
-                value={formData.niprod_code}
-                onChange={handleChange}
-                readOnly={isReadOnly}
-                className="w-full border-b-2 border-transparent py-2 px-3 text-gray-900 focus:outline-none focus:border-blue-400 focus:border-b-2 hover:border-blue-200 transition-colors duration-200"
-              />
-            </div>
-
-
-
-          </div>
-          {/* Mensaje de error si existe */}
-
-          {/* Botón de acción */}
-          <div className="flex justify-end pt-4">
-          <button
-              type="submit"
-              className={`mt-4 py-2 px-6 rounded-md transition-opacity duration-300 ${
-                mode === "view" ? "opacity-0 pointer-events-none" : "bg-blue-500 text-white"
-              }`}
-            >
-              {mode === "edit" ? "Actualizar" : "Agregar"}
-          </button>
-          </div>
-        </form>
-        
+      {renderEliminarButton()}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{renderFormInputs()}</div>
+        {renderSubmitButton()}
+      </form>
     </div>
-  )
-}
+  );
+}  

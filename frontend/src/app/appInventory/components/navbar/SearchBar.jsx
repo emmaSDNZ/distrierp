@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from 'react';
-import SearchIcon from '@mui/icons-material/Search';
+import { useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
 
-const SearchBar = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+const SearchBar = ({ onSearch }) => {
+  const [inputValue, setInputValue] = useState("");
 
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-    // Aquí puedes agregar la lógica para realizar la búsqueda
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      onSearch(inputValue);
+    }
   };
 
   return (
@@ -18,13 +19,11 @@ const SearchBar = () => {
       </div>
       <input
         type="text"
-        name="search"
-        id="search"
-        className="block w-full pl-8 pr-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-200 focus:border-blue-200 text-sm"
-        // Ajustado pl-8 pr-2 py-1 y focus
+        className="block w-full pl-8 pr-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-200 focus:border-blue-400 text-sm"
         placeholder="Buscar..."
-        value={searchTerm}
-        onChange={handleSearch}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
       />
     </div>
   );

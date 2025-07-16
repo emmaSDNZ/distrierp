@@ -3,7 +3,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from apps.products.models.supplierPoductModel import SupplierProduct
 from apps.products.api.serializer.supplierPoductSerializer import SupplierProductCreateSerializer, SupplierProductListSerializer
-from dataAnalytics.services import get_supplier_product_df
+from dataAnalytics.services.services import get_supplier_product_df
 
 class SupplierProductCreateAPIView(generics.CreateAPIView):
     serializer_class = SupplierProductCreateSerializer

@@ -1,93 +1,245 @@
 import { createContext, useCallback, useState } from "react";
 import { productApi } from "../api/productApi";
+import {auditApi} from '../api/apiAudit'
+import {apiProductoProducto} from '../api/apiProductoProductoLista'
 
+function messageError() {
+    throw new Error("Error al ejecutar la acción");
+  }
 const ApiProductContext = createContext({
-  productsList: [],
-  apiProductList: async()=>{},
-  productDetail: [],
-  apiProductDetail: async()=>{},
-  apiAddProduct: async()=>{},
-  productUpdate: [],
-  apiProductUpdate: async()=>{},
-  productDelete: [],
-  apiProductDelete: async()=>{},
 
+  nextUrl: null,
+  prevUrl: null,
+  producto: [],
+  apiProductoTemplateCreate: async () => {},
+  productosLista: [],
+  apiProductoTemplateDetalle: async ()=>{},
+  productoEliminar: [],
+  apiProductoTemplateEliminar: async()=>{},
+
+  auditLista:[],
+  apiAuditListaGeneral:async()=>{},
+  productoActualizar: [],
+  apiListarProductos_All: async()=>{},
+  apiProductoProductoDetalleByID: async()=>{},
+  apiProductoProductoByID: async()=>{},
+
+  productoProveedor: [],
+  productoProveedorLista:[],
+  apiProductoProveedorCreate: async()=>{},
+  apiProductoProveedorLista: async()=>{},
+  apiProductoProveedorByID: async()=>{},
+  apiProductoProveedorByNombreProveedor: async()=>{},
+
+  schemeTemplate: [],
+  apiProductoTemplateObtenerSchema: async () => {}
 });
-
 const ApiProductProvider = ({ children }) => {
 
-  const [productsList, setProductsList] = useState([]);
-  const [productDetail, setProductDetail] = useState([]);
-  const [productUpdate, setProductUpdate] = useState([]);
-  const [productDelete, setProductDelete] = useState([]);
+  const [nextUrl, setNextUrl] = useState(null);
+  const [prevUrl, setPrevUrl] = useState(null);
+  const [producto, setProducto] =  useState([])
+  const [productosLista, setProductosLista] = useState([]);
+  const [productoDetalle, setProductoDetalle] = useState([])
+  const [productoEliminar, setProductoEliminar] = useState([]);
 
-  const apiProductList = useCallback(async () => {
-    try {
-      const dataProductList = await productApi.fetchProductsList();
-      setProductsList(dataProductList.data);
-      return dataProductList.data;
-    } catch (error) {
-      console.error("Error al obtener productos:", error);
-      setProductsList([]);
-    }
+
+const apiProductoTemplateCreate = useCallback(async (formData) => {
+  const  response = await productApi.fetchProductoTemplateCrear(formData);
+  const {success, data} = response;
+  if (!success) {messageError();}
+  return data
   }, []);
 
-  const apiProductDetail = useCallback(async (id)=>{
-    try {
-      const dataProductDetail = await productApi.fetchProductId(id)
-      setProductDetail(dataProductDetail)
-      return dataProductDetail;
-    } catch (error) {
-      console.error("Error al obtener el producto:", error);
-      setProductDetail([]);
+const apiProductoTemplateDetalle =  useCallback(async(id, formData)=>{
+    const response = await productApi.fetchProductoTemplateDetalle(id, formData)
+    const {success, data} = response;
+    if (!success){
+      messageError() 
     }
-  },[])
+    setProductoDetalle(data)
+    return data
+  },[]) 
 
-  const apiAddProduct = useCallback(async (newProduct)=>{
-    try {
-      const addNewProduct = await productApi.fetchAddProduct(newProduct)
-      setProductsList(prevProducts => [...prevProducts, addNewProduct ])
-      return addNewProduct
-    } catch (error) {
-      console.error("Error al crear el producto:", error);
+const apiProductoTemplateEliminar = useCallback(async (id) => {
+    const { success, data } = await productApi.fetchProductoTemplateEliminar(id);
+    if (success) {
+      setProductoEliminar(data);
+      setProductosLista((prevProducts) =>
+        prevProducts.filter((product) => product.id !== id)
+      );
+      return { success, data };
+    } else {
+      messageError(); 
+    }
+}, []);
+
+  const apiListarProductos_All = useCallback(async() =>{
+    const {success, data} = await productApi.fetchProductosListGeneral()
+    if (success){
+      setProductosLista(data.results || []);
+      setNextUrl(data.next || null);
+      setPrevUrl(data.previous || null);
+      return data
+    }else{
+      messageError()
+      setProductosLista([]);
+      setNextUrl(null);
+      setPrevUrl(null);
     }
   }, [])
+  const [auditLista, setAuditLista] = useState([]);
 
-  const apiProductUpdate = useCallback(async (id, product) => {
-    try {
-      const dataProductUpdate = await productApi.fetchProductUpdate(id, product);
-      setProductUpdate(dataProductUpdate);
-      console.log("context", dataProductUpdate)
-      return dataProductUpdate;
-    } catch (error) {
-      console.error("Error al actualizar el producto:", error);
-    }
-  }, []);  
-
-  const apiProductDelete = useCallback(async (id) => {
-    try {
-      const dataProductDelete = await productApi.fetchProductDelete(id);
-      setProductDelete(dataProductDelete);
-      setProductsList((prevProducts) => prevProducts.filter((product) => product.id !== id));
-      console.log("Producto eliminado:", dataProductDelete);
-      return dataProductDelete;
-    }  catch (error) {
-      console.error("Error al eliminar el producto:", error);
-      setProductDelete("Error al eliminar el producto");
-      return "Error al eliminar el producto";
+  const apiAuditListaGeneral = useCallback(async (customUrl = null) => {
+    const { success, data } = await auditApi.fetchAudtiListaGeneral(customUrl);
+    if (success) {
+      console.log("CONTEXT apiAuditListaGeneral", data);
+      setAuditLista(data.results || []);
+      setNextUrl(data.next || null);
+      setPrevUrl(data.previous || null);
+      return data;
+    } else {
+      messageError();
+      setAuditLista([]);
+      setNextUrl(null);
+      setPrevUrl(null);
     }
   }, []);
 
+    const apiAuditListaGeneralSearch = useCallback(async (keySearch, keyValue) => {
+    const { success, data } = await productApi.fetchProductosListGeneralSearch(keySearch, keyValue);
+    if (success) {
+      console.log("CONTEXT apiAuditListaGeneral", data);
+      setProductosLista(data.results || []);
+      setNextUrl(data.next || null);
+      setPrevUrl(data.previous || null);
+      return data;
+    } else {
+      messageError();
+      setProductosLista([]);
+      setNextUrl(null);
+      setPrevUrl(null);
+    }
+  }, []);
+
+
+    /*PRODUCTO PRODUCTOS LISTA - lista*/
+  const apiProductoProductoDetalleByID = useCallback(async (id) => {
+    const response = await apiProductoProducto.getProductoProductoListaByID(id);
+    const {success, data} = response;
+    if (success) {
+      setProducto(data);
+      console.log("Contexto apiProductoProductoListaID", data);
+      return data;
+    }else{
+      messageError()
+  }}, [])
+
+  
+    /*PRODUCTO PRODUCTOS LISTA - lista*/
+  const apiProductoProductoByID = useCallback(async (id) => {
+    const response = await apiProductoProducto.getProductoProductoByID(id);
+    const {success, data} = response;
+    if (success) {
+      setProducto(data);
+      console.log("Contexto apiProductoProductoBYID", data);
+      return data;
+    }else{
+      messageError()
+  }}, [])
+
+  /* PRODUCTO PROVEEDOR */
+  const apiProductoProveedorCreate = useCallback(async (formData) => {
+  const  response = await productApi.fetchProductoProveedorCrear(formData);
+  const {success, data} = response;
+  console.log("CONTEXT apiProductoProveedorCreate" , success, data , data.message);
+  if (!success) {
+    messageError();
+  }
+  return data
+}, []);
+
+
+const [productoProveedorLista, setProductoProveedorLista] = useState([])
+const [productoProveedor, setProductoProveedor] = useState([])
+
+const apiProductoProveedorLista  = useCallback(async (keySearch, keyValue) => {
+    const response = await productApi.fetchProductoProductoLista(keySearch, keyValue);
+    const {success, data} =  response
+    if (success) {
+      console.log("CONTEXT apiProductoProveedorLista", data);
+      setProductoProveedorLista(data.results || []);
+      setNextUrl(data.next || null);
+      setPrevUrl(data.previous || null);
+      return data;
+    } else {
+      messageError();
+      setProductosLista([]);
+      setNextUrl(null);
+      setPrevUrl(null);
+    }
+  }, []);
+
+    const apiProductoProveedorByID = useCallback(async (id) => {
+    const response = await productApi.fetchProductoProveedorByID(id);
+    const {success, data} = response;
+    if (!success) {
+      messageError()
+    }
+    setProductoProveedorLista(data);
+    console.log("Contexto apiProductoProductoListaID", data);
+    return data;
+   }, [])
+
+   
+const apiProductoProveedorByNombreProveedor = useCallback(async (nombre_proveedor) => {
+  const response = await productApi.fetchProductoProveedorByNombreProveedor(nombre_proveedor);
+  const { success, data } = response;
+  if (!success) { messageError(); }
+  setProductoProveedorLista(data);
+  return { success, data };
+}, []);
+
+const [schemaFields, setSchemaFields] = useState(null); 
+
+const apiProductoTemplateObtenerSchema = useCallback(async () => {
+  const response = await productApi.fetchProductoTemplateObtenerSchema();
+  const { success, data } = response;
+  console.log("CONTEXT apiProductoTemplateObtenerSchema", response);
+  if (!success) {
+    messageError();
+  }
+  setSchemaFields(data);
+  return response
+}, []);
+
   const value = {
-    productsList,
-    apiProductList,
-    productDetail,
-    apiProductDetail,
-    apiAddProduct,
-    productUpdate,
-    apiProductUpdate,
-    productDelete,
-    apiProductDelete,
+    nextUrl,
+    prevUrl,
+    producto,
+    productoDetalle,
+    apiProductoTemplateCreate,
+    productosLista,
+    apiProductoTemplateDetalle,
+    productoDetalle,
+    apiListarProductos_All,
+    productoEliminar,
+    apiProductoTemplateEliminar, 
+    apiAuditListaGeneral,
+    auditLista,
+    apiAuditListaGeneralSearch,
+    apiProductoProductoDetalleByID,
+    apiProductoProductoByID,
+    apiProductoProveedorCreate,
+    productoProveedorLista,
+    apiProductoProveedorLista,
+
+    productoProveedor,
+    apiProductoProveedorByID,
+    apiProductoProveedorByNombreProveedor,
+    schemaFields,
+    setSchemaFields,         
+    apiProductoTemplateObtenerSchema,
   };
 
   return (
@@ -95,7 +247,6 @@ const ApiProductProvider = ({ children }) => {
       {children}
     </ApiProductContext.Provider>
   );
-
 };
 
 export { ApiProductContext, ApiProductProvider };

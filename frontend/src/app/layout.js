@@ -25,9 +25,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ overflow: "hidden", height: "100vh", margin: 0, padding: 0 }}
       >
         {children}
-        <Toaster   richColors visibleToasts={10}/>
+        <Toaster richColors visibleToasts={10} />
       </body>
     </html>
   );

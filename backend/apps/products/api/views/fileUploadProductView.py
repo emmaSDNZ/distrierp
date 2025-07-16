@@ -9,10 +9,10 @@ import json
 from io import BytesIO
 from apps.products.api.serializer.fileUploadProductSerializer import FileUploadProductSerializer
 from apps.products.models.fileUploadProductModel import FileUploadProductModel
-from apps.products.models.userModel import User 
+from apps.products.models.userProvider import UserProvider 
 from apps.products.utils.services import successUserFile, readFile
 from dataAnalytics.utils.preProcessing import successColumns, dfProcessing
-from  dataAnalytics.services import get_supplier_product_df
+
 
 class FileUploeadProductListAPIView(generics.ListAPIView):
     serializer_class = FileUploadProductSerializer
@@ -103,7 +103,7 @@ class FileUploeadProductCreateAPIView(generics.CreateAPIView):
 
         try:
             # 3. Verificar existencia del usuario
-            name_supplier = User.objects.get(id=user_id)
+            name_supplier = UserProvider.objects.get(id=user_id)
 
             # 4. Leer archivo original a DataFrame
             df = readFile(file_obj)

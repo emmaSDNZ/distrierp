@@ -1,6 +1,6 @@
 import React from 'react'
 import Navbar from './Navbar'
-import SearchBar from './SearchBar'
+
 import UserDropdown from '@/componentsGlobals/UserDropdown'
 
 export default function InventoryNavBar() {
@@ -14,7 +14,6 @@ export default function InventoryNavBar() {
       </div>
       {/** Barra de Busqueda */}
       <div className="w-full flex justify-center py-2">
-        <SearchBar />
       </div>
         
     </div>  

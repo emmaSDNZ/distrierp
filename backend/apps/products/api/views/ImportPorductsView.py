@@ -1,18 +1,14 @@
 from rest_framework.views import APIView
-
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
-import pandas as pd
-import numpy as np
-from unidecode import unidecode
-from dataAnalytics.utils.preProcessing import successColumns
-import math
-
 from apps.products.api.serializer.importProductsSerializer import ProductImportSerializer
+from apps.products.models.priceHistory import PriceHistoryModel, PriceModel
+from apps.products.models.productModel import Product
+from dataAnalytics.utils.preProcessing import dfProcess, proceso_columna_precio
+
 
 class ProductCreateImportAPIView(APIView):
-
     def post(self, request, *args, **kwargs):
         # Usamos el serializador para validar y crear el producto
         serializer = ProductImportSerializer(data=request.data)
@@ -26,92 +22,110 @@ class ProductCreateImportAPIView(APIView):
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-def clean_for_json(data):
-    if isinstance(data, list):
-        return [clean_for_json(d) for d in data]
-    elif isinstance(data, dict):
-        return {k: clean_for_json(v) for k, v in data.items()}
-    elif isinstance(data, float) and (math.isnan(data) or math.isinf(data)):
-        return None
-    return data
-
-
 class ImportarProductosAPIView(APIView):
-
     parser_classes = (MultiPartParser, FormParser)
+    
     def post(self, request, *args, **kwargs):
         file_obj = request.FILES.get('file_product')
+
         if file_obj is None:
             return Response({
-                "error": "No se recibió el archivo. Usa la clave 'file_product'."
+                "success": False,
+                "error": "No se recibió el archivo. Usa la clave 'file_product'.",
+                "data": []
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            if file_obj.name.endswith('.csv'):
-                df = pd.read_csv(file_obj)
-            elif file_obj.name.endswith('.xlsx'):
-                df = pd.read_excel(file_obj)
-            else:
+            name_column = "price"
+            name_column1 = "psp"
+            name_column2 = "psv"
+
+            df = dfProcess(file_obj)  # Procesa archivo inicial (probablemente un Excel o CSV)
+
+            # Normalización de columnas
+            df = self.normalizar_columnas(df)
+
+            # Procesamiento de la columna "price"
+            df = proceso_columna_precio(df, name_column)
+            print("DF PRICE", df)
+
+            # Procesamiento de la columna "psp"
+            df = proceso_columna_precio(df, name_column1)
+            print("DF PSP", df["psp"])
+
+            # Procesamiento de la columna "psv"
+            df = proceso_columna_precio(df, name_column2)
+            print("DF PSV", df["psv"])
+
+            # Verificación de datos
+            if isinstance(df, str):
                 return Response({
-                    "error": "Formato de archivo no soportado. Usa .csv o .xlsx"
+                    "success": False,
+                    "error": df
                 }, status=status.HTTP_400_BAD_REQUEST)
+            productos_creados = []
+            precios_actualizados = []
 
-            df = df.reset_index(drop=True)
-            df.columns = [unidecode(col.strip().lower()) for col in df.columns]
+            for _, fila in df.iterrows():
+                name = fila["name"]
+                price = fila.get("price")
+                price_cost = fila.get("psp")
+                price_sale = fila.get("psv")
 
-            for col in df.select_dtypes(include=['object']):
-                df[col] = df[col].map(lambda x: unidecode(str(x).lower()) if isinstance(x, str) else x)
+                if not price or not price_cost or not price_sale:
+                    print(f"Datos incompletos para el producto '{name}', se omite.")
+                    continue
 
-            df = df.dropna(how='all')
-            df = df.dropna(axis=1, how='all')
-            print("Columnas detectadas:", df.columns)
+                product, created = Product.objects.get_or_create(name=name)
+                if created:
+                    print(f"Producto creado: {name}")
+                else:
+                    print(f"Producto existente: {name}")
 
-            columnas_obligatorias = ['name', 'price']
-            columnas_presentes = [col for col in columnas_obligatorias if col in df.columns]
+                precio_obj = self.registrar_precio(product, price, 'price')
+                costo_obj = self.registrar_precio(product, price_cost, 'purchase')
+                venta_obj = self.registrar_precio(product, price_sale, 'sale')
 
-            if columnas_presentes:
-                df_nuevo = df[columnas_presentes].copy()
+                productos_creados.append(name)
 
-                if 'price' in df_nuevo.columns:
-                    # Reemplaza valores no numéricos explícitos
-                    df_nuevo['price'] = df_nuevo['price'].replace('-', np.nan)
-                    
-                    # Convierte a numérico (int o float); si no se puede, queda como NaN
-                    df_nuevo['price'] = pd.to_numeric(df_nuevo['price'], errors='coerce')
-                    
-                    # Opcional: elimina filas con price NaN (valores no numéricos)
-                    df_nuevo = df_nuevo[~df_nuevo['price'].isna()]
-
-                print("Preview JSON del dataframe:\n", df_nuevo.to_json(orient='records'))
-
-                productos_creados = []
-                for _, fila in df_nuevo.iterrows():
-                    data = {}
-                    if 'name' in fila:
-                        data["name"] = fila["name"]
-                    if 'price' in fila and not pd.isna(fila["price"]):
-                        data["price"] = float(fila["price"])
-
-                    print("Datos a validar:", data)
-                    serializer = ProductImportSerializer(data=data)
-
-                    if serializer.is_valid():
-                        serializer.save()
-                        productos_creados.append(serializer.data)
-                    else:
-                        print(f"Error con los datos: {serializer.errors}")
-                        continue
-
-                return Response({
-                    "mensaje": "Productos creados correctamente",
-                    "productos_creados": clean_for_json(productos_creados)
-                }, status=status.HTTP_200_OK)
+                precios_actualizados.append({
+                    "producto": name,
+                    "precios": {
+                        "price": precio_obj.price_value if precio_obj else None,
+                        "purchase": costo_obj.price_value if costo_obj else None,
+                        "sale": venta_obj.price_value if venta_obj else None,
+                    }
+                })
 
             return Response({
-                "error": "Faltan columnas obligatorias: 'name' y/o 'price'"
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "mensaje": "Productos creados correctamente",
+                "precios_actualizados": precios_actualizados
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({
                 "error": f"Error al leer el archivo: {str(e)}"
             }, status=status.HTTP_400_BAD_REQUEST)
+
+    def normalizar_columnas(self, df):
+        """Función para normalizar los nombres de las columnas"""
+        df.columns = df.columns.str.lower().str.replace(' ', '_')
+        return df
+
+    def registrar_precio(self, product, valor, tipo):
+        if valor is not None:
+            # Registrar en historial
+            PriceHistoryModel.objects.create(
+                product=product,
+                price_value=valor,
+                price_type=tipo,
+                source='importación'
+            )
+            # Actualizar precio activo y retornar el objeto
+            price_obj, _ = PriceModel.objects.update_or_create(
+                product=product,
+                price_type=tipo,
+                defaults={'price_value': valor}
+            )
+            return price_obj
+        return None

@@ -6,6 +6,7 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
+
 // Componente reutilizable para menús desplegables
 const Dropdown = ({ isOpen, items, onClose, anchorRef }) => {
   const dropdownRef = useRef(null);

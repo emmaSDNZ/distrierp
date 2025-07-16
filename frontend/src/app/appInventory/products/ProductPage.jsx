@@ -1,33 +1,61 @@
-// /appInventory/products/page.jsx
-
-"use client"
-import React from 'react';
-import { useSearchParams } from 'next/navigation';
-
-import ProductView from './view/ProductView';
-import VariantsView from './view/VariantsView';
+"use client";
+import React, { useState } from 'react';
+import ProductsList from '../components/products/ProductList';
+import ProductForm from '../components/products/ProductForm';
+import EntityButton from '@/shared/components/entityGeneral/EntityButton';
 
 export default function ProductPage() {
-  const searchParams = useSearchParams();
-  const view = searchParams.get('view');
+  const isListMode = "list";  
+  const isViewMode = "view";
+  const isEditMode = "edit";
+  const isCreateMode = "create";
 
-  const renderView = () => {
-    // 👇 ambos casos se manejan por ProductView
-    if (view === 'products' || view === 'new' || view === null) {
-      return <ProductView />;
+  const [isMode, setIsMode] = useState(isListMode);
+
+  function handleToggleCreateList() {
+    if (isMode === isListMode) {
+      setIsMode(isCreateMode);
+    } else {
+      setIsMode(isListMode);
     }
-    if (view === 'productsvariants') {
-      return <VariantsView />;
-    }
+  }
 
-    return <div>Selecciona una operación del menú</div>;
-  };
-
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto p-4">
-        {renderView()}
+  if (isMode === isListMode) {
+    return (
+      <div>
+        <EntityButton
+          title="Agregar"
+          onClick={handleToggleCreateList}
+        />
+        <ProductsList />
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (isMode === isCreateMode) {
+    return (
+      <div>
+        <EntityButton
+          title="Volver a la lista"
+          onClick={handleToggleCreateList}
+        />
+        <ProductForm isMode={isCreateMode} setIsMode={setIsMode} />
+      </div>
+    );
+  }
+
+  
+  if (isMode === isViewMode) {
+    return (
+      <div>
+        <p>Vista de producto</p>
+        <EntityButton
+          title="Volver a la lista"
+          onClick={() => setIsMode(isListMode)}
+        />
+      </div>
+    );
+  }
+
+  return <div>Error: modo inválido</div>;
 }

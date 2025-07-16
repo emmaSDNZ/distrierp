@@ -1,14 +1,14 @@
 from django.db import models
 from apps.base.models import BaseModel  # BaseModel puede contener campos comunes como fecha de creación
 from apps.products.models.productModel import Product  # Modelo de Producto
-from apps.products.models.userModel import User  # Modelo de Usuario (Proveedor)
+from apps.products.models.userProvider import UserProvider  # Modelo de Usuario (Proveedor)
 
 class SupplierProduct(BaseModel):
     product_id = models.ForeignKey(
         Product, on_delete=models.CASCADE, verbose_name="Producto", blank=False
     )
     supplier_id = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name="Proveedor", blank=False
+        UserProvider, on_delete=models.CASCADE, verbose_name="Proveedor", blank=False
     )
 
     class Meta:

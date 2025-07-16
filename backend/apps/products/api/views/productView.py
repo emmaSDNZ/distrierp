@@ -2,7 +2,7 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from apps.products.models.productModel import Product
-
+from apps.products.api.pagination.pagination import CustomPagination
 from apps.products.api.serializer.productSerializer import ProductSerializer, ProductWriteSerializer
 
 
@@ -26,23 +26,29 @@ class ProductCreateAPIView(generics.CreateAPIView):
 
 
 class ProductListAPIView(generics.ListAPIView):
-    serializer_class= ProductSerializer
-    def get(self, request):
-        queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    pagination_class = CustomPagination
 
-        if not queryset.exists():
-            return Response({
-                "success": False,
-                "message": "No se encontraron productos.",
-                "data": []  # Aseguramos que la respuesta sea coherente con la estructura
-            }, status=status.HTTP_404_NOT_FOUND)
+    def get_queryset(self):
+        queryset = Product.objects.all().order_by('-create_date') 
+        name = self.request.query_params.get('name', None)
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response({
             "success": True,
             "message": "Lista de productos obtenida correctamente.",
             "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        })
 
 class ProductRetrieveAPIView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
