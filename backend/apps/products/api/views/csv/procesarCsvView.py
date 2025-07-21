@@ -1,7 +1,7 @@
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import generics, serializers
-from dataAnalytics.procesarCsv.procesarCsv import procesar_csv
+from dataAnalytics.services.procesarCsv import procesar_csv
 
 class CSVProcesarSerializer(serializers.Serializer):
     file = serializers.FileField()
@@ -26,7 +26,7 @@ class ProcesarCSVAPIView(generics.CreateAPIView):
         file = serializer.validated_data['file']
         json_proveedor = serializer.validated_data['df']
         id_proveedor = serializer.validated_data['id_proveedor']
-
+        print(json_proveedor)
         resultado = procesar_csv(json_proveedor, id_proveedor)
 
         # Validamos que haya productos en la base del sistema

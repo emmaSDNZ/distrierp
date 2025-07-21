@@ -15,9 +15,9 @@ def coincidencias_codigo_df(dfs: dict):
             "logs": ["⚠️ Error: DataFrames proveedor o sistema faltan."]
         }
 
-    coincidencias, no_coincidentes = obtener_coincidencias_columnas(ProductoProductoModel, df_proveedor)
-
-    etapas = detectar_coincidencias_por_etapas(df_proveedor, df_sistema, coincidencias)
+    coincidencias_columnas, no_coincidentes = obtener_coincidencias_columnas(ProductoProductoModel, df_proveedor)
+    
+    etapas, no_coincidentes_final = detectar_coincidencias_por_etapas(df_proveedor, df_sistema, coincidencias_columnas)
 
     df_total_coincidentes = []
     productos_actualizados = []
@@ -28,17 +28,17 @@ def coincidencias_codigo_df(dfs: dict):
         productos_actualizados.extend(etapa["actualizados"])
         logs.extend(etapa["logs"])
 
-    df_resultado_final = pd.concat(df_total_coincidentes, ignore_index=True)
-    print("coincidencias_codigo_df")
-    print(df_resultado_final)
-    print("logs")
-    print(logs)
+    if df_total_coincidentes:
+        df_resultado_final = pd.concat(df_total_coincidentes, ignore_index=True)
+    else:
+        df_resultado_final = pd.DataFrame()
+
     logs.append(f"✅ Coincidentes totales: {len(df_resultado_final)}")
-    logs.append(f"❌ No coincidentes finales: {len(etapas[-1]['no_coincidentes']) if etapas else 0}")
+    logs.append(f"❌ No coincidentes finales: {len(no_coincidentes_final)}")
 
     return {
         "coincidentes": df_resultado_final,
-        "no_coincidentes": etapas[-1]["no_coincidentes"] if etapas else pd.DataFrame(),
+        "no_coincidentes": no_coincidentes_final,
         "actualizados": productos_actualizados,
         "logs": logs
     }

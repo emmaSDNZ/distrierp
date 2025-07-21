@@ -73,13 +73,14 @@ class ProductoTemplateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Extraer datos del producto
-        descripcion = validated_data.pop('descripcion', '')
+        descripcion = validated_data.pop('descripcion', 'Sin descripción')
         codigo_referencia = validated_data.pop('codigo_referencia', '')
         codigo_barras = validated_data.pop('codigo_barras', '')
         codigo_interno = validated_data.pop('codigo_interno', '')
         codigo_ncm = validated_data.pop('codigo_ncm', '')
         codigo_producto = validated_data.pop('codigo_producto', '')
         codigo_niprod = validated_data.pop('codigo_niprod', '')
+
 
         # Extraer precios
         precio_unitario = validated_data.pop('_precio_compra_unitario', None)

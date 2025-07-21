@@ -112,7 +112,7 @@ def normalizar_dataframe(df):
     # Columnas que NO deben ser normalizadas (por nombre o patrón)
     columnas_excluidas = [
         "codigo barras", "codigo producto", "codigo proveedor", "cert",
-        "precio", "precio compra", "precio con iva", "precio sin iva",
+        "precio", "precio compra", "precio con iva", "precio sin iva", "EAN 13 "
         "id_producto", "id producto", "cantidad", "presentacion", "unidad medida"
     ]
     

@@ -9,10 +9,8 @@ import { ApiCsvContext } from "@/shared/context/CsvContext";
 import { EditableTableModal } from "@/shared/ui/Internal/EditableTableModal";
 import { MuiModal } from "@/shared/ui/Internal/MuiModal";
 import {
-
   Typography,
   Box,
-  Button,
 } from "@mui/material";
 
 
@@ -110,8 +108,6 @@ export default function InternalForm({ columnas: columnasProp, file, df: dfProp 
   // Función para guardar cambios desde modal editable
   const handleGuardarCambios = (nuevaData) => {
     setDf(nuevaData);
-    // Opcional: si querés actualizar columnas si cambia estructura, descomentá:
-    // if (nuevaData.length > 0) setColumnas(Object.keys(nuevaData[0]));
   };
 
   return (
@@ -303,20 +299,6 @@ export default function InternalForm({ columnas: columnasProp, file, df: dfProp 
                 {resumenProcesado.totalActualizados}
               </Typography>
             </button>
-          </div>
-
-          <div className="mt-6">
-            <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-              📦 Muestra de productos del proveedor:
-            </Typography>
-            <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
-              {resumenProcesado.proveedorData.map((p, idx) => (
-                <li key={idx}>
-                  {p["producto"]} —{" "}
-                  <span className="text-gray-500">${p["precio compra"]}</span>
-                </li>
-              ))}
-            </ul>
           </div>
 
           <div className="mt-4">

@@ -1,6 +1,7 @@
 import pandas as pd
 from dataAnalytics.services.normalizarDf import normalizar_nombre
-from apps.products.models.producto.productoProductoModel import ProductoProductoModel
+
+
 def obtener_coincidencias_columnas(modelo_django, df: pd.DataFrame):
 
     # Campos concretos (no relaciones) del modelo

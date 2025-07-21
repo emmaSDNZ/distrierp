@@ -1,28 +1,73 @@
 // components/entityAuditTrial/EntityFilterAccion.jsx
+"use client";
+
 import React from 'react';
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
+} from '@mui/material';
 
 export default function EntityFilterAccion({ accion, setAccion }) {
+  const actionOptions = [
+    { value: "", label: "Todos" },
+    { value: "create", label: "Create" },
+    { value: "update", label: "Update" },
+    { value: "delete", label: "Delete" },
+  ];
+
   return (
-    <div className="flex items-center min-w-[200px] flex-shrink-0">
-      <label
-        htmlFor="accion"
-        className="text-sm font-semibold whitespace-nowrap mr-2"
-        style={{ lineHeight: "1.75rem" }}
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        minWidth: { xs: 'auto', sm: '200px' },
+        flexShrink: 0,
+        gap: 2,
+        // mb: 2, // Considera eliminar este mb aquí y manejar el espaciado en AuditHistory
+        justifyContent: { xs: 'flex-start', sm: 'flex-start' } // Asegurar alineación
+      }}
+    >
+      <Typography
+        variant="body2"
+        component="label"
+        htmlFor="accion-select"
+        sx={{
+          fontWeight: 'medium',
+          whiteSpace: 'nowrap',
+          color: 'text.primary',
+        }}
       >
         Filtrar por acción:
-      </label>
-      <select
-        id="accion"
-        value={accion}
-        onChange={(e) => setAccion(e.target.value)}
-        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-200 focus:border-blue-400 text-sm"
-        style={{ minWidth: "140px", height: "38px" }}
+      </Typography>
+
+      <FormControl
+        variant="outlined"
+        size="small"
+        sx={{
+          minWidth: '140px',
+          flexGrow: 1,
+        }}
       >
-        <option value="">Todos</option>
-        <option value="create">Create</option>
-        <option value="update">Update</option>
-        <option value="delete">Delete</option>
-      </select>
-    </div>
+        <Select
+          id="accion-select"
+          value={accion}
+          onChange={(e) => setAccion(e.target.value)}
+          displayEmpty
+          inputProps={{ 'aria-label': 'Filtrar por acción' }}
+        >
+          {actionOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              <Typography variant="body2" sx={{ color: option.value === "" ? 'text.secondary' : 'text.primary' }}>
+                {option.label}
+              </Typography>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
   );
 }

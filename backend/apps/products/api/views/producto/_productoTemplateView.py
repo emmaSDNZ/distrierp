@@ -1,4 +1,6 @@
 from rest_framework import generics
+from rest_framework.exceptions import ValidationError
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from ....models.producto.productoTemplateModel import ProductoTemplateModel
@@ -12,12 +14,21 @@ class ProductoTemplateCreateAPIView(generics.CreateAPIView):
     serializer_class = ProductoTemplateSerializer
 
     def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-        print(response.data)
-        nombre_producto = response.data.get(
-            "nombre_base_producto", 
-            "ProductoTemplateModel"
-            )
+        try:
+            response = super().create(request, *args, **kwargs)
+        except ValidationError as e:
+            return Response({
+                "success": False,
+                "message": str(e)
+            }, )
+        except Exception as e:
+            # Para cualquier otro error, para debug
+            return Response({
+                "success": False,
+                "message": f"Error inesperado: {str(e)}"
+            },)
+
+        nombre_producto = response.data.get("nombre_base_producto", "ProductoTemplateModel")
         return Response({
             "success": True,
             "message": f'Producto "{nombre_producto}" creado correctamente.',

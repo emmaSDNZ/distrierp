@@ -93,7 +93,7 @@ const apiProductoTemplateEliminar = useCallback(async (id) => {
   const apiAuditListaGeneral = useCallback(async (customUrl = null) => {
     const { success, data } = await auditApi.fetchAudtiListaGeneral(customUrl);
     if (success) {
-      console.log("CONTEXT apiAuditListaGeneral", data);
+  
       setAuditLista(data.results || []);
       setNextUrl(data.next || null);
       setPrevUrl(data.previous || null);
@@ -109,7 +109,7 @@ const apiProductoTemplateEliminar = useCallback(async (id) => {
     const apiAuditListaGeneralSearch = useCallback(async (keySearch, keyValue) => {
     const { success, data } = await productApi.fetchProductosListGeneralSearch(keySearch, keyValue);
     if (success) {
-      console.log("CONTEXT apiAuditListaGeneral", data);
+  
       setProductosLista(data.results || []);
       setNextUrl(data.next || null);
       setPrevUrl(data.previous || null);
@@ -129,7 +129,7 @@ const apiProductoTemplateEliminar = useCallback(async (id) => {
     const {success, data} = response;
     if (success) {
       setProducto(data);
-      console.log("Contexto apiProductoProductoListaID", data);
+  
       return data;
     }else{
       messageError()
@@ -142,7 +142,8 @@ const apiProductoTemplateEliminar = useCallback(async (id) => {
     const {success, data} = response;
     if (success) {
       setProducto(data);
-      console.log("Contexto apiProductoProductoBYID", data);
+      
+
       return data;
     }else{
       messageError()
@@ -152,7 +153,7 @@ const apiProductoTemplateEliminar = useCallback(async (id) => {
   const apiProductoProveedorCreate = useCallback(async (formData) => {
   const  response = await productApi.fetchProductoProveedorCrear(formData);
   const {success, data} = response;
-  console.log("CONTEXT apiProductoProveedorCreate" , success, data , data.message);
+
   if (!success) {
     messageError();
   }
@@ -167,7 +168,7 @@ const apiProductoProveedorLista  = useCallback(async (keySearch, keyValue) => {
     const response = await productApi.fetchProductoProductoLista(keySearch, keyValue);
     const {success, data} =  response
     if (success) {
-      console.log("CONTEXT apiProductoProveedorLista", data);
+    
       setProductoProveedorLista(data.results || []);
       setNextUrl(data.next || null);
       setPrevUrl(data.previous || null);
@@ -187,7 +188,7 @@ const apiProductoProveedorLista  = useCallback(async (keySearch, keyValue) => {
       messageError()
     }
     setProductoProveedorLista(data);
-    console.log("Contexto apiProductoProductoListaID", data);
+  
     return data;
    }, [])
 
@@ -205,7 +206,7 @@ const [schemaFields, setSchemaFields] = useState(null);
 const apiProductoTemplateObtenerSchema = useCallback(async () => {
   const response = await productApi.fetchProductoTemplateObtenerSchema();
   const { success, data } = response;
-  console.log("CONTEXT apiProductoTemplateObtenerSchema", response);
+
   if (!success) {
     messageError();
   }
