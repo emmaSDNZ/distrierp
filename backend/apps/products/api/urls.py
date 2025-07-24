@@ -167,11 +167,6 @@ urlpatterns = [
     path('attribute/value/delete/<int:pk>/', ValueAttributeDestroyAPIView.as_view(), name='delete_value_attribute_delete'),
 
 
-    # Endpoint de carga de productos
-    path('products/upload/veryfy/', FileUploeadProductVeryfyAPIView.as_view(), name='upload_product verydy'),
-    path('products/upload/create/', FileUploeadProductCreateAPIView.as_view(), name='upload_product create'),  
-    path('products/upload/list/', FileUploeadProductListAPIView.as_view(), name='upload_product list'),  
-    
     # Endpoint de Auditoria de productos
     path('audit/product/list/', RecordAuditListAPIView.as_view(), name='audit product list'),
     path('audit/product/<int:pk>/', RecordAuditDetailAPIView.as_view(), name='audit product detail'),

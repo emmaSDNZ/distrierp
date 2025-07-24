@@ -1,19 +1,24 @@
-"use client"
-import React, { useState, useContext, useRef } from "react";
+"use client";
+
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { apiPrecio } from "@/shared/api/apiPrecio";
 import { crearPreciosParaProducto } from "@/shared/services/servicesProductos/servicesPrecios";
 import { ApiProductContext } from "@/shared/context/ProductContext";
-import EntityButton from "@/shared/components/entityGeneral/EntityButton";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FormInput from "@/shared/components/entityForm/FormInput";
-import UtilsFunctions from "@/shared/utils/utilsFunctions";
-import { Box, IconButton, Typography } from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  IconButton,
+  Button,
+  Paper,
+} from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import DeleteIcon from "@mui/icons-material/Delete";
+import UtilsFunctions from "@/shared/utils/utilsFunctions";
 
 export default function GeneralInformationForm({
-  productoProductoData,
-  setProductoPrecios,
+  productData,
   nameData,
   setNameData,
   mode,
@@ -24,6 +29,9 @@ export default function GeneralInformationForm({
     apiProductoTemplateDetalle,
     apiProductoTemplateEliminar,
   } = useContext(ApiProductContext);
+
+  const producto_producto = productData?.producto_productos|| {};
+  const producto_precios_compra = productData?.producto_precios || {};
 
   const router = useRouter();
 
@@ -43,13 +51,70 @@ export default function GeneralInformationForm({
     NIPROD: "",
   });
 
-  const handleChange = UtilsFunctions.createHandleChange(setFormData);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuOpen = Boolean(anchorEl);
+  const moreBtnRef = useRef(null);
 
-  // ✅ UX: limpiar input si es 0 y restaurar si queda vacío
-  const handleFocus = (e) => {
-    if (e.target.value === "0" || e.target.value === 0) {
-      e.target.value = "";
+  useEffect(() => {
+    if (productData) {
+      setFormData({
+        Descripcion: producto_producto.descripcion || "",
+        Precio: producto_precios_compra.precio_compra_con_iva
+          ? Number(producto_precios_compra.precio_compra_con_iva)
+          : 0,
+        "Precio de compra unitario": producto_precios_compra.precio_compra_unitario
+          ? Number(producto_precios_compra.precio_compra_unitario)
+          : 0,
+        "Precio de compra con IVA": producto_precios_compra.precio_compra_con_iva
+          ? Number(producto_precios_compra.precio_compra_con_iva)
+          : 0,
+        "Precio de compra sin IVA": producto_precios_compra.precio_compra_sin_iva
+          ? Number(producto_precios_compra.precio_compra_sin_iva)
+          : 0,
+        "Precio de compra sugerido": producto_precios_compra.precio_compra_sugerido
+          ? Number(producto_precios_compra.precio_compra_sugerido)
+          : 0,
+        "Precio de venta": 0,
+        "Codigo referencia": producto_producto.codigo_referencia || "",
+        "Codigo barras": producto_producto.codigo_barras || "",
+        "Codigo interno": producto_producto.codigo_interno || "",
+        "Codigo NCM": producto_producto.codigo_ncm || "",
+        "Codigo producto": producto_producto.codigo_producto || "",
+        NIPROD: producto_producto.codigo_niprod || "",
+      });
     }
+  }, [productData, mode]);
+
+  const BASIC_FIELDS = [
+    "Descripcion",
+    "Precio",
+    "Precio de compra unitario",
+    "Precio de venta",
+    "Codigo referencia",
+    "Codigo barras",
+    "Codigo interno",
+    "Codigo NCM",
+    "Codigo producto",
+    "NIPROD",
+  ];
+
+  const ADVANCED_PRICE_FIELDS = [
+    "Precio de compra unitario",
+    "Precio de compra con IVA",
+    "Precio de compra sin IVA",
+    "Precio de compra sugerido",
+  ];
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name.startsWith("Precio") ? Number(value) || 0 : value,
+    }));
+  };
+
+  const handleFocus = (e) => {
+    if (e.target.value === "0" || e.target.value === 0) e.target.value = "";
   };
 
   const handleBlur = (e) => {
@@ -59,10 +124,6 @@ export default function GeneralInformationForm({
     }
   };
 
-  const [anchorEl, setAnchorEl] = useState(null);
-  const menuOpen = Boolean(anchorEl);
-  const moreBtnRef = useRef(null);
-
   const handleMoreClick = (event) => setAnchorEl(event.currentTarget);
   const handleMoreClose = () => setAnchorEl(null);
 
@@ -71,7 +132,6 @@ export default function GeneralInformationForm({
       id_producto_producto: idProducto,
       ...data,
     };
-
     return await apiFn(formDataPrecio);
   }
 
@@ -80,251 +140,273 @@ export default function GeneralInformationForm({
 
     if (mode === "edit") {
       const resultadoNombre = await apiProductoTemplateDetalle(
-        productoProductoData.id_producto_template,
+        productData.id_producto_template,
         { nombre_base_producto: nameData.nombre_base_producto }
       );
 
-      const productoProductoId =
-        productoProductoData?.producto_productos?.[0]?.id_producto_producto;
+      const productoProductoId = producto_producto.id_producto_producto;
 
       if (!productoProductoId) {
-        UtilsFunctions.showToastMessageSuccessError(false, "Producto sin ID para actualizar precios");
+        UtilsFunctions.showToastMessageSuccessError(
+          false,
+          "Producto sin ID para actualizar precios"
+        );
         return;
       }
 
-      await crearPrecioProducto(productoProductoId, formData["Precio"], apiPrecio.createPrecioBase);
-      await crearPrecioProducto(productoProductoId, formData["Precio de venta"], apiPrecio.createPrecioVenta);
-      await crearPrecioProducto(productoProductoId, formData["Precio de compra unitario"], apiPrecio.createPrecioCompra);
+      await crearPrecioProducto(
+        productoProductoId,
+        { precio: formData["Precio"] },
+        apiPrecio.createPrecioBase
+      );
+      await crearPrecioProducto(
+        productoProductoId,
+        { precio: formData["Precio de venta"] },
+        apiPrecio.createPrecioVenta
+      );
+      await crearPrecioProducto(
+        productoProductoId,
+        { precio: formData["Precio de compra unitario"] },
+        apiPrecio.createPrecioCompra
+      );
 
       UtilsFunctions.showToastMessageSuccessError(resultadoNombre);
 
       const productoActualizado = await apiProductoTemplateDetalle(
-        productoProductoData.id_producto_template
+        productData.id_producto_template
       );
 
       if (productoActualizado) {
-        setNameData({ nombre_base_producto: productoActualizado.nombre_base_producto });
+        setNameData({
+          nombre_base_producto: productoActualizado.nombre_base_producto,
+        });
         setMode("view");
       }
       return;
     }
 
-if (mode === "create") {
-  const formattedDataProductoTemplate = {
-    nombre_base_producto: nameData.nombre_base_producto,
-    descripcion: formData["Descripcion"],
-    codigo_referencia: formData["Codigo referencia"],
-    codigo_barras: formData["Codigo barras"],
-    codigo_interno: formData["Codigo interno"],
-    codigo_ncm: formData["Codigo NCM"],
-    codigo_producto: formData["Codigo producto"],
-    codigo_niprod: formData["NIPROD"],
-  };
+    if (mode === "create") {
+      const formattedDataProductoTemplate = {
+        nombre_base_producto: nameData.nombre_base_producto,
+        descripcion: formData["Descripcion"],
+        codigo_referencia: formData["Codigo referencia"],
+        codigo_barras: formData["Codigo barras"],
+        codigo_interno: formData["Codigo interno"],
+        codigo_ncm: formData["Codigo NCM"],
+        codigo_producto: formData["Codigo producto"],
+        codigo_niprod: formData["NIPROD"],
+      };
 
-  const response = await apiProductoTemplateCreate(formattedDataProductoTemplate);
-  const { success, message, data } = response;
+      const response = await apiProductoTemplateCreate(formattedDataProductoTemplate);
+      const { success, message, data } = response;
 
-  UtilsFunctions.showToastMessageSuccessError(success, message);
-  if (!success) return;
+      UtilsFunctions.showToastMessageSuccessError(success, message);
+      if (!success) return;
 
-  await crearPreciosParaProducto(data.id_producto_producto, formData);
-  await apiProductoTemplateDetalle(data.id_producto_template);
+      await crearPreciosParaProducto(data.id_producto_producto, formData);
+      await apiProductoTemplateDetalle(data.id_producto_template);
 
-  setFormData({
-    Descripcion: "",
-    Precio: 0,
-    "Precio de compra unitario": 0,
-    "Precio de compra con IVA": 0,
-    "Precio de compra sin IVA": 0,
-    "Precio de compra sugerido": 0,
-    "Precio de venta": 0,
-    "Codigo referencia": "",
-    "Codigo barras": "",
-    "Codigo interno": "",
-    "Codigo NCM": "",
-    "Codigo producto": "",
-    NIPROD: "",
-  });
+      setFormData({
+        Descripcion: "",
+        Precio: 0,
+        "Precio de compra unitario": 0,
+        "Precio de compra con IVA": 0,
+        "Precio de compra sin IVA": 0,
+        "Precio de compra sugerido": 0,
+        "Precio de venta": 0,
+        "Codigo referencia": "",
+        "Codigo barras": "",
+        "Codigo interno": "",
+        "Codigo NCM": "",
+        "Codigo producto": "",
+        NIPROD: "",
+      });
 
-  setNameData({ nombre_base_producto: "" });
-}
-
+      setNameData({ nombre_base_producto: "" });
+    }
   }
 
-  function renderFormInputs() {
-    const basicFields = [
-      "Descripcion",
-      "Precio",
-      "Precio de compra unitario",
-      "Precio de venta",
-      "Codigo referencia",
-      "Codigo barras",
-      "Codigo interno",
-      "Codigo NCM",
-      "Codigo producto",
-      "NIPROD",
-    ];
-
-    return basicFields.map((key) => {
-      if (key === "Precio de compra unitario") {
-        return (
-          <div key={key} className="flex items-center space-x-2">
-            <FormInput
-              label={key}
-              type="number"
-              id={key}
-              name={key}
-              value={formData[key]}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              readOnly={mode === "view"}
-              className="flex-grow"
-            />
-            {mode !== "view" && (
-              <IconButton
-                aria-label="Precios avanzados"
-                onClick={handleMoreClick}
-                ref={moreBtnRef}
-                size="small"
-                sx={{ ml: 1 }}
-              >
-                <MoreVertIcon />
-              </IconButton>
-            )}
-
-            {menuOpen && anchorEl === moreBtnRef.current && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  mt: 1,
-                  p: 1,
-                  bgcolor: "background.paper",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  borderRadius: 1,
-                  zIndex: 10,
-                  width: 220,
-                  fontSize: 13,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-                onMouseLeave={handleMoreClose}
-              >
-                <Typography
-                  variant="subtitle1"
-                  gutterBottom
-                  sx={{
-                    fontWeight: "600",
-                    textAlign: "center",
-                    mb: 1,
-                    fontSize: 14,
-                    width: "100%",
-                  }}
-                >
-                  Precios de compra avanzados
-                </Typography>
-
-                {[
-                  "Precio de compra unitario",
-                  "Precio de compra con IVA",
-                  "Precio de compra sin IVA",
-                  "Precio de compra sugerido",
-                ].map((key) => (
-                  <div
-                    key={key}
-                    style={{
-                      marginBottom: 6,
-                      whiteSpace: "nowrap",
-                      width: "100%",
-                      display: "flex",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <FormInput
-                      label={key}
-                      type="number"
-                      id={key}
-                      name={key}
-                      value={formData[key]}
-                      onChange={handleChange}
-                      onFocus={handleFocus}
-                      onBlur={handleBlur}
-                      readOnly={mode === "view"}
-                      className="text-sm"
-                      style={{ width: 130, margin: 0, padding: "4px 6px" }}
-                    />
-                  </div>
-                ))}
-              </Box>
-            )}
-          </div>
-        );
-      }
-
-      const inputType = typeof formData[key] === "number" ? "number" : "text";
-      return (
-        <FormInput
-          key={key}
-          label={key}
-          type={inputType}
-          id={key}
-          name={key}
-          value={formData[key]}
-          onChange={handleChange}
-          onFocus={inputType === "number" ? handleFocus : undefined}
-          onBlur={inputType === "number" ? handleBlur : undefined}
-          readOnly={mode === "view"}
-        />
-      );
-    });
-  }
-
-  function renderEliminarButton() {
-    if (mode === "view") {
-      return (
-        <div className="flex justify-end pt-4">
-          <EntityButton
-            title="Eliminar producto"
+  return (
+    <Box>
+      {mode === "view" && (
+        <Box display="flex" justifyContent="flex-end" mb={2}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
             onClick={() => {
-              if (!productoProductoData) return;
+              if (!productData) return;
               UtilsFunctions.deleteClick(
                 apiProductoTemplateEliminar,
-                productoProductoData.id_producto_template,
+                productData.id_producto_template,
                 router,
                 "/appInventory/products?view=new"
               );
             }}
-            startIcon={<DeleteIcon />}
-          />
-        </div>
-      );
-    }
-    return null;
-  }
+          >
+            Eliminar producto
+          </Button>
+        </Box>
+      )}
 
-  function renderSubmitButton() {
-    if (
-      (mode === "create" || mode === "edit") &&
-      nameData.nombre_base_producto?.trim()
-    ) {
-      const title = mode === "edit" ? "Actualizar" : "Agregar";
-      return (
-        <div className="flex justify-end pt-4">
-          <EntityButton type="submit" size="large" title={title} />
-        </div>
-      );
-    }
-    return null;
-  }
+      <form onSubmit={handleSubmit}>
+        <Box
+          sx={{
+            display: "grid",
 
-  return (
-    <div>
-      {renderEliminarButton()}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{renderFormInputs()}</div>
-        {renderSubmitButton()}
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            gap: 2.5,
+            justifyContent: "start",
+            mx: "auto", 
+            px: 3, 
+            
+          }}
+        >
+          {BASIC_FIELDS.map((key) => {
+            if (key === "Precio de compra unitario") {
+              return (
+                <Box
+                  key={key}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    position: "relative",
+                    maxWidth: 280,
+                    width: "100%",
+                  }}
+                >
+                  <TextField
+                    label={key}
+                    type="number"
+                    name={key}
+                    value={formData[key]}
+                    onChange={handleChange}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    InputProps={{ readOnly: mode === "view" }}
+                    variant="standard"
+                    fullWidth
+                    size="small"
+                    sx={{
+                      "& .MuiInput-underline:before": {
+                        borderBottomColor: "#ccc",
+                      },
+                      "& .MuiInput-underline:hover:before": {
+                        borderBottomColor: "#1976d2",
+                      },
+                      "& .MuiInput-underline:after": {
+                        borderBottomColor: "#1976d2",
+                      },
+                    }}
+                  />
+                  {(mode === "view" || mode === "edit" || mode === "create") && (
+                    <>
+                      <IconButton
+                        aria-label="Precios avanzados"
+                        onClick={handleMoreClick}
+                        ref={moreBtnRef}
+                        size="small"
+                        sx={{ ml: 1 }}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                      {menuOpen && anchorEl === moreBtnRef.current && (
+                        <Paper
+                          elevation={3}
+                          sx={{
+                            position: "absolute",
+                            top: "100%",
+                            left: 0,
+                            mt: 1,
+                            p: 2,
+                            width: 280,
+                            zIndex: 10,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1,
+                          }}
+                          onMouseLeave={handleMoreClose}
+                        >
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: "600", textAlign: "center" }}
+                          >
+                            Precios de compra avanzados
+                          </Typography>
+                          {ADVANCED_PRICE_FIELDS.map((keyAdv) => (
+                            <TextField
+                              key={keyAdv}
+                              label={keyAdv}
+                              type="number"
+                              name={keyAdv}
+                              value={formData[keyAdv]}
+                              onChange={handleChange}
+                              onFocus={handleFocus}
+                              onBlur={handleBlur}
+                              InputProps={{ readOnly: mode === "view" }}
+                              variant="standard"
+                              size="small"
+                              sx={{
+                                "& .MuiInput-underline:before": {
+                                  borderBottomColor: "#ccc",
+                                },
+                                "& .MuiInput-underline:hover:before": {
+                                  borderBottomColor: "#1976d2",
+                                },
+                                "& .MuiInput-underline:after": {
+                                  borderBottomColor: "#1976d2",
+                                },
+                              }}
+                            />
+                          ))}
+                        </Paper>
+                      )}
+                    </>
+                  )}
+                </Box>
+              );
+            }
+
+            return (
+              <TextField
+                key={key}
+                label={key}
+                type={typeof formData[key] === "number" ? "number" : "text"}
+                name={key}
+                value={formData[key]}
+                onChange={handleChange}
+                onFocus={typeof formData[key] === "number" ? handleFocus : undefined}
+                onBlur={typeof formData[key] === "number" ? handleBlur : undefined}
+                InputProps={{ readOnly: mode === "view" }}
+                variant="standard"
+                fullWidth
+                size="small"
+                sx={{
+                  maxWidth: 280,
+                  "& .MuiInput-underline:before": {
+                    borderBottomColor: "#ccc",
+                  },
+                  "& .MuiInput-underline:hover:before": {
+                    borderBottomColor: "#1976d2",
+                  },
+                  "& .MuiInput-underline:after": {
+                    borderBottomColor: "#1976d2",
+                  },
+                }}
+              />
+            );
+          })}
+        </Box>
+
+        {(mode === "create" || mode === "edit") && nameData.nombre_base_producto?.trim() && (
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button variant="contained" type="submit" size="large">
+              {mode === "edit" ? "Actualizar" : "Agregar"}
+            </Button>
+          </Box>
+        )}
       </form>
-    </div>
+    </Box>
   );
-}  
+}
